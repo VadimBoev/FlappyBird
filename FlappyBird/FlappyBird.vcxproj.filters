@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="app\src\main\jni\main.c" />
+    <ClCompile Include="app\src\main\jni\android_native_app_glue.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app\src\main\jni\Application.mk" />
+    <None Include="app\src\main\jni\Android.mk" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="app\src\main\jni\android_native_app_glue.h" />
+  </ItemGroup>
+</Project>
