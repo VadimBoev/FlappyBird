@@ -41,18 +41,18 @@ void handle_input(struct android_app* app, AInputEvent* event)
         case AMOTION_EVENT_ACTION_DOWN:
         case AMOTION_EVENT_ACTION_POINTER_DOWN:
             isDown = true;
-            Log("Touch down at (%f, %f)", x, y);
+            //Log("Touch down at (%f, %f)", x, y);
             break;
 
         case AMOTION_EVENT_ACTION_UP:
         case AMOTION_EVENT_ACTION_POINTER_UP:
             isReleased = true;
-            Log("Touch up at (%f, %f)", x, y);
+            //Log("Touch up at (%f, %f)", x, y);
             break;
 
         case AMOTION_EVENT_ACTION_MOVE:
             isMoved = true;
-            Log("Touch move at (%f, %f)", x, y);
+            //Log("Touch move at (%f, %f)", x, y);
             break;
         }
 

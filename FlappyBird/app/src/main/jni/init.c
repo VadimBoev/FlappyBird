@@ -7,6 +7,7 @@
 #include "texture.h"
 #include "shaders.h"
 #include "audio.h"
+#include "game.h"
 
 bool                 g_Initialized = false;
 EGLDisplay           g_EglDisplay = EGL_NO_DISPLAY;
@@ -18,7 +19,6 @@ int32_t WindowSizeX = 0;
 int32_t WindowSizeY = 0;
 
 GLuint program;
-GLuint texture;
 
 void Init(struct android_app* app)
 {
@@ -93,16 +93,13 @@ void Init(struct android_app* app)
     WindowSizeX = ANativeWindow_getWidth(g_App->window);
     WindowSizeY = ANativeWindow_getHeight(g_App->window);
 
-    // Load texture
-    texture = LoadTexture("buttons/pause.png");
-    if (!texture)
+    if (!InitGame())
     {
-        Log("Failed to load texture");
+        Log("Game not init!");
         return;
     }
 
     CreateAudioEngine();
-    //PlayAudio("audio/point.mp3");
 
     // Create shader program
     program = createProgram(vertexShaderSource, fragmentShaderSource);
@@ -113,8 +110,6 @@ void Init(struct android_app* app)
     g_Initialized = true;
 }
 
-uint64_t updtime = 0;
-bool lol = false;
 void MainLoopStep()
 {
     if (g_EglDisplay == EGL_NO_DISPLAY)
@@ -125,23 +120,7 @@ void MainLoopStep()
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    // Render texture
-    RenderTexture(texture, 200, 200, 100, 100);
-
-    if (!lol)
-    {
-        updtime = getTickCount();
-        lol = true;
-    }
-    
-    if (getTickCount() - updtime > 1500)
-    {
-        PlayAudio("audio/point.mp3");
-        Log("robet?");
-        updtime = getTickCount();
-    }
-
-    //Log("Tick %u", getTickCount());
+    Render();
 
     eglSwapBuffers(g_EglDisplay, g_EglSurface);
 }
@@ -170,8 +149,7 @@ void Shutdown()
     g_EglSurface = EGL_NO_SURFACE;
     ANativeWindow_release(g_App->window);
 
-    // Delete texture and program
-    glDeleteTextures(1, &texture);
+    ShutdownGame();
     glDeleteProgram(program);
 
     g_Initialized = false;

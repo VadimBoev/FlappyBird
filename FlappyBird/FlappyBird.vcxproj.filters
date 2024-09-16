@@ -10,6 +10,7 @@
     <ClCompile Include="app\src\main\jni\texture.c" />
     <ClCompile Include="app\src\main\jni\utils.c" />
     <ClCompile Include="app\src\main\jni\mouse.c" />
+    <ClCompile Include="app\src\main\jni\game.c" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app\src\main\jni\Application.mk" />
@@ -24,5 +25,6 @@
     <ClInclude Include="app\src\main\jni\texture.h" />
     <ClInclude Include="app\src\main\jni\utils.h" />
     <ClInclude Include="app\src\main\jni\mouse.h" />
+    <ClInclude Include="app\src\main\jni\game.h" />
   </ItemGroup>
 </Project>
