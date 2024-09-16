@@ -73,6 +73,8 @@ del /Q "app\build\outputs\apk\unaligned.apk"
 echo APK successfully created: app\build\outputs\apk\%APKNAME%-signed.apk
 
 :: Debug moment
+echo Clear logcat
+%ADB% logcat -c
 echo Installing APK
 %ADB% install app\build\outputs\apk\%APKNAME%-signed.apk
 start /min timeout.exe 1
