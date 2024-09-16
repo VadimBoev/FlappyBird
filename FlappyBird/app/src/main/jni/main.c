@@ -4,7 +4,15 @@
 #include <android/log.h>
 #include <jni.h>
 
+#define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, "flappy", __VA_ARGS__))
+#define LOGE(...) ((void)__android_log_print(ANDROID_LOG_ERROR, "flappy", __VA_ARGS__))
+
+struct android_app* gapp;
+
 #include <math.h>
+
+//load png
+#include "upng.h"
 
 //audio
 #include <SLES/OpenSLES.h>
@@ -14,8 +22,115 @@
 #include <android/asset_manager.h>
 #include <android/asset_manager_jni.h>
 
-#define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, "flappy", __VA_ARGS__))
-#define LOGE(...) ((void)__android_log_print(ANDROID_LOG_ERROR, "flappy", __VA_ARGS__))
+
+// Создание и инициализация объекта OpenSL ES
+SLObjectItf engineObject = NULL;
+SLEngineItf engineEngine;
+SLObjectItf outputMixObject = NULL;
+SLObjectItf playerObject = NULL;
+SLPlayItf playerPlay;
+
+void createEngine() {
+    SLresult result;
+
+    // Создание объекта движка
+    result = slCreateEngine(&engineObject, 0, NULL, 0, NULL, NULL);
+    if (result != SL_RESULT_SUCCESS) {
+        LOGE("Failed to create engine");
+        return;
+    }
+
+    // Инициализация объекта движка
+    result = (*engineObject)->Realize(engineObject, SL_BOOLEAN_FALSE);
+    if (result != SL_RESULT_SUCCESS) {
+        LOGE("Failed to realize engine");
+        return;
+    }
+
+    // Получение интерфейса движка
+    result = (*engineObject)->GetInterface(engineObject, SL_IID_ENGINE, &engineEngine);
+    if (result != SL_RESULT_SUCCESS) {
+        LOGE("Failed to get engine interface");
+        return;
+    }
+
+    // Создание объекта вывода
+    const SLInterfaceID ids[1] = { SL_IID_ENVIRONMENTALREVERB };
+    const SLboolean req[1] = { SL_BOOLEAN_FALSE };
+    result = (*engineEngine)->CreateOutputMix(engineEngine, &outputMixObject, 1, ids, req);
+    if (result != SL_RESULT_SUCCESS) {
+        LOGE("Failed to create output mix");
+        return;
+    }
+
+    // Инициализация объекта вывода
+    result = (*outputMixObject)->Realize(outputMixObject, SL_BOOLEAN_FALSE);
+    if (result != SL_RESULT_SUCCESS) {
+        LOGE("Failed to realize output mix");
+        return;
+    }
+}
+
+void createAudioPlayer(AAssetManager* assetManager, const char* assetPath) {
+    SLresult result;
+
+    // Открытие файла из assets
+    AAsset* audioAsset = AAssetManager_open(assetManager, assetPath, AASSET_MODE_BUFFER);
+    if (!audioAsset) {
+        LOGE("Failed to open asset file");
+        return;
+    }
+
+    // Получение буфера и длины файла
+    off_t start, length;
+    int fd = AAsset_openFileDescriptor(audioAsset, &start, &length);
+    AAsset_close(audioAsset);
+
+    if (fd < 0) {
+        LOGE("Failed to get file descriptor");
+        return;
+    }
+
+    // Создание источника данных
+    SLDataLocator_AndroidFD loc_fd = { SL_DATALOCATOR_ANDROIDFD, fd, start, length };
+    SLDataFormat_MIME format_mime = { SL_DATAFORMAT_MIME, NULL, SL_CONTAINERTYPE_MP3 };
+    SLDataSource audioSrc = { &loc_fd, &format_mime };
+
+    // Настройка приемника данных
+    SLDataLocator_OutputMix loc_outmix = { SL_DATALOCATOR_OUTPUTMIX, outputMixObject };
+    SLDataSink audioSnk = { &loc_outmix, NULL };
+
+    // Создание проигрывателя
+    const SLInterfaceID ids[3] = { SL_IID_SEEK, SL_IID_MUTESOLO, SL_IID_VOLUME };
+    const SLboolean req[3] = { SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE };
+    result = (*engineEngine)->CreateAudioPlayer(engineEngine, &playerObject, &audioSrc, &audioSnk, 3, ids, req);
+    if (result != SL_RESULT_SUCCESS) {
+        LOGE("Failed to create audio player");
+        return;
+    }
+
+    // Инициализация проигрывателя
+    result = (*playerObject)->Realize(playerObject, SL_BOOLEAN_FALSE);
+    if (result != SL_RESULT_SUCCESS) {
+        LOGE("Failed to realize player");
+        return;
+    }
+
+    // Получение интерфейса воспроизведения
+    result = (*playerObject)->GetInterface(playerObject, SL_IID_PLAY, &playerPlay);
+    if (result != SL_RESULT_SUCCESS) {
+        LOGE("Failed to get play interface");
+        return;
+    }
+
+    // Начало воспроизведения
+    result = (*playerPlay)->SetPlayState(playerPlay, SL_PLAYSTATE_PLAYING);
+    if (result != SL_RESULT_SUCCESS) {
+        LOGE("Failed to start playing");
+        return;
+    }
+}
+
 
 struct engine {
     struct android_app* app;
@@ -125,10 +240,16 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd) {
         case APP_CMD_LOST_FOCUS:
             engine_draw_frame(engine);
             break;
+        case APP_CMD_START:
+        {
+
+            break;
+        }
     }
 }
 
-void android_main(struct android_app* state) {
+void android_main(struct android_app* state) 
+{
     struct engine engine;
 
     memset(&engine, 0, sizeof(engine));
@@ -136,7 +257,51 @@ void android_main(struct android_app* state) {
     state->onAppCmd = engine_handle_cmd;
     engine.app = state;
 
+    gapp = state;
+
     engine.time = 0.0f;
+
+    unsigned char* buffer, *pixels;
+    int width_logo, height_logo;
+    unsigned long len_file = 0;
+
+    AAsset* file = AAssetManager_open(state->activity->assetManager, "buttons/pause.png", AASSET_MODE_BUFFER);
+    if (file)
+    {
+        LOGI("File buttons.png found");
+        buffer = (unsigned char*)AAsset_getBuffer(file);
+        len_file = AAsset_getLength(file);
+
+        upng_t* png = upng_new_from_bytes(buffer, len_file);
+
+        if (png == NULL) {
+            LOGI("Error create PNG.\n");
+            return;
+        }
+
+        upng_decode(png);
+
+        if (upng_get_error(png) != UPNG_EOK) 
+        {
+            LOGI("Error with decode PNG");
+            upng_free(png);
+            return;
+        }
+
+        unsigned width = upng_get_width(png);
+        unsigned height = upng_get_height(png);
+        unsigned bpp = upng_get_bpp(png);
+
+        LOGI("Width: %u\n", width);
+        LOGI("Height: %u\n", height);
+        LOGI("Bit in pixel: %u\n", bpp);
+
+        upng_free(png);
+    }
+
+    createEngine();
+    createAudioPlayer(state->activity->assetManager, "audio/point.mp3");
+
 
     while (1) {
         int ident;
