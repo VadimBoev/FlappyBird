@@ -41,6 +41,43 @@ SLSeekItf playerSeek;
 
 //=================================================
 
+const char* vertexShaderSource =
+    "attribute vec4 aPosition;"
+    "attribute vec2 aTexCoord;"
+    "varying vec2 vTexCoord;"
+    "void main() {"
+    "    gl_Position = aPosition;"
+    "    vTexCoord = aTexCoord;"
+    "}";
+
+const char* fragmentShaderSource =
+    "precision mediump float;"
+    "varying vec2 vTexCoord;"
+    "uniform sampler2D uTexture;"
+    "void main() {"
+    "    gl_FragColor = texture2D(uTexture, vTexCoord);"
+    "}";
+
+GLuint loadShader(GLenum type, const char* source) 
+{
+    GLuint shader = glCreateShader(type);
+    glShaderSource(shader, 1, &source, NULL);
+    glCompileShader(shader);
+    return shader;
+}
+
+GLuint createProgram(const char* vertexSource, const char* fragmentSource) 
+{
+    GLuint vertexShader = loadShader(GL_VERTEX_SHADER, vertexSource);
+    GLuint fragmentShader = loadShader(GL_FRAGMENT_SHADER, fragmentSource);
+    GLuint program = glCreateProgram();
+    glAttachShader(program, vertexShader);
+    glAttachShader(program, fragmentShader);
+    glLinkProgram(program);
+    return program;
+}
+
+
 void createEngine() 
 {
     SLresult result;
@@ -202,6 +239,8 @@ void stopAudio()
     }
 }
 
+GLuint program;
+GLuint texture;
 void Init(struct android_app* app)
 {
     if (g_Initialized)
@@ -212,13 +251,13 @@ void Init(struct android_app* app)
 
     // Initialize EGL
     g_EglDisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-    if (g_EglDisplay == EGL_NO_DISPLAY) 
+    if (g_EglDisplay == EGL_NO_DISPLAY)
     {
         LOGE("eglGetDisplay(EGL_DEFAULT_DISPLAY) returned EGL_NO_DISPLAY");
         return;
     }
 
-    if (eglInitialize(g_EglDisplay, 0, 0) != EGL_TRUE) 
+    if (eglInitialize(g_EglDisplay, 0, 0) != EGL_TRUE)
     {
         LOGE("eglInitialize() returned with an error");
         return;
@@ -248,7 +287,7 @@ void Init(struct android_app* app)
     eglGetConfigAttrib(g_EglDisplay, egl_config, EGL_NATIVE_VISUAL_ID, &egl_format);
     ANativeWindow_setBuffersGeometry(g_App->window, 0, 0, egl_format);
 
-    const EGLint egl_context_attributes[] = { EGL_CONTEXT_CLIENT_VERSION, 3, EGL_NONE };
+    const EGLint egl_context_attributes[] = { EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE };
     g_EglContext = eglCreateContext(g_EglDisplay, egl_config, EGL_NO_CONTEXT, egl_context_attributes);
     if (g_EglContext == EGL_NO_CONTEXT) {
         LOGE("eglCreateContext() returned EGL_NO_CONTEXT");
@@ -266,10 +305,8 @@ void Init(struct android_app* app)
         return;
     }
 
-   
-    //init other
-    unsigned char* buffer, * pixels;
-    int width_logo, height_logo;
+    // Load and decode PNG
+    unsigned char* buffer;
     unsigned long len_file = 0;
 
     AAsset* file = AAssetManager_open(g_App->activity->assetManager, "buttons/pause.png", AASSET_MODE_BUFFER);
@@ -303,11 +340,28 @@ void Init(struct android_app* app)
         LOGI("Height: %u\n", height);
         LOGI("Bit in pixel: %u\n", bpp);
 
+        // Create texture
+        glGenTextures(1, &texture);
+        glBindTexture(GL_TEXTURE_2D, texture);
+
+        // Set texture parameters
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+        // Load data into texture
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, upng_get_buffer(png));
+
         upng_free(png);
     }
 
     createEngine();
     createAudioPlayer(g_App->activity->assetManager, "audio/point.mp3");
+
+    // Create shader program
+    program = createProgram(vertexShaderSource, fragmentShaderSource);
+    glUseProgram(program);
 
     LOGE("FlappyBird is loaded!");
 
@@ -327,7 +381,52 @@ void MainLoopStep()
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
+    // Use shader program
+    glUseProgram(program);
 
+    // Set up vertex data
+    GLfloat vertices[] = {
+        -1.0f, -1.0f, 0.0f, 0.0f,
+         1.0f, -1.0f, 1.0f, 0.0f,
+         1.0f,  1.0f, 1.0f, 1.0f,
+        -1.0f,  1.0f, 0.0f, 1.0f
+    };
+
+    GLuint indices[] = {
+        0, 1, 2,
+        2, 3, 0
+    };
+
+    GLuint vbo, ebo;
+    glGenBuffers(1, &vbo);
+    glGenBuffers(1, &ebo);
+
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+    // Set up vertex attributes
+    GLint positionAttrib = glGetAttribLocation(program, "aPosition");
+    glEnableVertexAttribArray(positionAttrib);
+    glVertexAttribPointer(positionAttrib, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (void*)0);
+
+    GLint texCoordAttrib = glGetAttribLocation(program, "aTexCoord");
+    glEnableVertexAttribArray(texCoordAttrib);
+    glVertexAttribPointer(texCoordAttrib, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (void*)(2 * sizeof(GLfloat)));
+
+    // Bind texture
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glUniform1i(glGetUniformLocation(program, "uTexture"), 0);
+
+    // Draw elements
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+    // Clean up
+    glDeleteBuffers(1, &vbo);
+    glDeleteBuffers(1, &ebo);
 
     eglSwapBuffers(g_EglDisplay, g_EglSurface);
 }
