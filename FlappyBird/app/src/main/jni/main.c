@@ -1,6 +1,8 @@
 #include "android_native_app_glue.h"
 #include "init.h"
 #include "utils.h"
+#include "mouse.h"
+MouseState mouse;
 
 static void handleAppCmd(struct android_app* app, int32_t cmd)
 {
@@ -28,30 +30,43 @@ void handle_input(struct android_app* app, AInputEvent* event)
         int32_t action = AMotionEvent_getAction(event);
         int32_t pointerIndex = (action & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
         int32_t pointerId = AMotionEvent_getPointerId(event, pointerIndex);
+        float x = AMotionEvent_getX(event, pointerIndex);
+        float y = AMotionEvent_getY(event, pointerIndex);
+        bool isDown = false;
+        bool isReleased = false;
+        bool isMoved = false;
 
         switch (action & AMOTION_EVENT_ACTION_MASK) 
         {
         case AMOTION_EVENT_ACTION_DOWN:
         case AMOTION_EVENT_ACTION_POINTER_DOWN:
-            Log("Touch down at (%f, %f)", AMotionEvent_getX(event, pointerIndex), AMotionEvent_getY(event, pointerIndex));
+            isDown = true;
+            Log("Touch down at (%f, %f)", x, y);
             break;
 
         case AMOTION_EVENT_ACTION_UP:
         case AMOTION_EVENT_ACTION_POINTER_UP:
-            Log("Touch up at (%f, %f)", AMotionEvent_getX(event, pointerIndex), AMotionEvent_getY(event, pointerIndex));
+            isReleased = true;
+            Log("Touch up at (%f, %f)", x, y);
             break;
 
         case AMOTION_EVENT_ACTION_MOVE:
-            Log("Touch move at (%f, %f)", AMotionEvent_getX(event, pointerIndex), AMotionEvent_getY(event, pointerIndex));
+            isMoved = true;
+            Log("Touch move at (%f, %f)", x, y);
             break;
         }
+
+        mouse_update(&mouse, x, y, isDown, isReleased, isMoved);
     }
 }
+
 
 void android_main(struct android_app* state)
 {
     state->onInputEvent = handle_input;
     state->onAppCmd = handleAppCmd;
+
+    mouse_init(&mouse);
 
     while (1)
     {
@@ -71,8 +86,10 @@ void android_main(struct android_app* state)
             }
         }
 
-        if (g_Initialized) {
+        if (g_Initialized) 
+        {
             MainLoopStep();
+            mouse_reset(&mouse);
         }
     }
 }

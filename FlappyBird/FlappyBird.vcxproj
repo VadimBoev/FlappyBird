@@ -39,6 +39,7 @@
     <ClCompile Include="app\src\main\jni\audio.c" />
     <ClCompile Include="app\src\main\jni\init.c" />
     <ClCompile Include="app\src\main\jni\main.c" />
+    <ClCompile Include="app\src\main\jni\mouse.c" />
     <ClCompile Include="app\src\main\jni\shaders.c" />
     <ClCompile Include="app\src\main\jni\texture.c" />
     <ClCompile Include="app\src\main\jni\upng.c" />
@@ -52,6 +53,7 @@
     <ClInclude Include="app\src\main\jni\android_native_app_glue.h" />
     <ClInclude Include="app\src\main\jni\audio.h" />
     <ClInclude Include="app\src\main\jni\init.h" />
+    <ClInclude Include="app\src\main\jni\mouse.h" />
     <ClInclude Include="app\src\main\jni\shaders.h" />
     <ClInclude Include="app\src\main\jni\texture.h" />
     <ClInclude Include="app\src\main\jni\upng.h" />
