@@ -1,12 +1,12 @@
+#include <EGL/egl.h>
+#include <GLES2/gl2.h>
+#include <android/native_window.h>
+#include <android/asset_manager.h>
 #include "init.h"
 #include "utils.h"
 #include "texture.h"
 #include "shaders.h"
 #include "audio.h"
-#include <EGL/egl.h>
-#include <GLES2/gl2.h>
-#include <android/native_window.h>
-#include <android/asset_manager.h>
 
 bool                 g_Initialized = false;
 EGLDisplay           g_EglDisplay = EGL_NO_DISPLAY;
@@ -101,8 +101,8 @@ void Init(struct android_app* app)
         return;
     }
 
-    createEngine();
-    createAudioPlayer("audio/point.mp3");
+    CreateAudioEngine();
+    //PlayAudio("audio/point.mp3");
 
     // Create shader program
     program = createProgram(vertexShaderSource, fragmentShaderSource);
@@ -113,6 +113,8 @@ void Init(struct android_app* app)
     g_Initialized = true;
 }
 
+uint64_t updtime = 0;
+bool lol = false;
 void MainLoopStep()
 {
     if (g_EglDisplay == EGL_NO_DISPLAY)
@@ -125,6 +127,21 @@ void MainLoopStep()
 
     // Render texture
     RenderTexture(texture, 200, 200, 100, 100);
+
+    if (!lol)
+    {
+        updtime = getTickCount();
+        lol = true;
+    }
+    
+    if (getTickCount() - updtime > 1500)
+    {
+        PlayAudio("audio/point.mp3");
+        Log("robet?");
+        updtime = getTickCount();
+    }
+
+    //Log("Tick %u", getTickCount());
 
     eglSwapBuffers(g_EglDisplay, g_EglSurface);
 }

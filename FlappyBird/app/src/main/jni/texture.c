@@ -1,9 +1,9 @@
-#include "utils.h"
-#include "init.h"
 #include <GLES2/gl2.h>
 #include <android/asset_manager.h>
 #include "upng.h"
 #include "texture.h"
+#include "utils.h"
+#include "init.h"
 
 GLuint LoadTexture(const char* assetPath)
 {

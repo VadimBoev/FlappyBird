@@ -1,10 +1,11 @@
 #ifndef AUDIO_H
 #define AUDIO_H
 
-void createEngine();
-void createAudioPlayer(const char* assetPath);
-void pauseAudio();
-void resumeAudio();
-void stopAudio();
+void CreateAudioEngine();
+void PlayAudio(const char* assetPath);
+void PauseAudio();
+void ResumeAudio();
+void StopAudio();
+void DestroyAudioPlayer();
 
 #endif // AUDIO_H

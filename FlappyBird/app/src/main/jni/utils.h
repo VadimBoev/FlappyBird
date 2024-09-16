@@ -6,10 +6,10 @@
 
 void Log(const char* fmt, ...);
 
-#if defined(__aarch64__)
-uint64_t GetTickCount();
-#else
-uint32_t GetTickCount();
-#endif
+//#if defined(__aarch64__)
+uint64_t getTickCount();
+//#else
+//uint32_t getTickCount();
+//#endif
 
 #endif // UTILS_H

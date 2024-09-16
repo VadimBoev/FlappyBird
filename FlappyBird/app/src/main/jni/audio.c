@@ -12,7 +12,7 @@ SLObjectItf playerObject = NULL;
 SLPlayItf playerPlay;
 SLSeekItf playerSeek;
 
-void createEngine()
+void CreateAudioEngine()
 {
     SLresult result;
 
@@ -59,9 +59,18 @@ void createEngine()
     }
 }
 
-void createAudioPlayer(const char* assetPath)
+void PlayAudio(const char* assetPath)
 {
     SLresult result;
+
+    if (engineObject == NULL || engineEngine == NULL || outputMixObject == NULL)
+    {
+        Log("Audio engine or output mix not initialized");
+        return;
+    }
+    
+    // free last player if he is exist
+    DestroyAudioPlayer();
 
     AAsset* audioAsset = AAssetManager_open(g_App->activity->assetManager, assetPath, AASSET_MODE_BUFFER);
     if (!audioAsset)
@@ -132,7 +141,7 @@ void createAudioPlayer(const char* assetPath)
     }
 }
 
-void pauseAudio()
+void PauseAudio()
 {
     SLresult result;
     if (playerPlay)
@@ -145,7 +154,7 @@ void pauseAudio()
     }
 }
 
-void resumeAudio()
+void ResumeAudio()
 {
     SLresult result;
     if (playerPlay)
@@ -158,7 +167,18 @@ void resumeAudio()
     }
 }
 
-void stopAudio()
+void DestroyAudioPlayer()
+{
+    if (playerObject != NULL)
+    {
+        (*playerObject)->Destroy(playerObject);
+        playerObject = NULL;
+        playerPlay = NULL;
+        playerSeek = NULL;
+    }
+}
+
+void StopAudio()
 {
     SLresult result;
     if (playerPlay)
@@ -168,5 +188,6 @@ void stopAudio()
         {
             Log("Failed to stop playing");
         }
+        DestroyAudioPlayer();
     }
 }
