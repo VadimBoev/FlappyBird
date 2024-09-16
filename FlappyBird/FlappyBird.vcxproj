@@ -36,8 +36,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="app\src\main\jni\android_native_app_glue.c" />
+    <ClCompile Include="app\src\main\jni\audio.c" />
+    <ClCompile Include="app\src\main\jni\init.c" />
     <ClCompile Include="app\src\main\jni\main.c" />
+    <ClCompile Include="app\src\main\jni\shaders.c" />
+    <ClCompile Include="app\src\main\jni\texture.c" />
     <ClCompile Include="app\src\main\jni\upng.c" />
+    <ClCompile Include="app\src\main\jni\utils.c" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app\src\main\jni\Android.mk" />
@@ -45,7 +50,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="app\src\main\jni\android_native_app_glue.h" />
+    <ClInclude Include="app\src\main\jni\audio.h" />
+    <ClInclude Include="app\src\main\jni\init.h" />
+    <ClInclude Include="app\src\main\jni\shaders.h" />
+    <ClInclude Include="app\src\main\jni\texture.h" />
     <ClInclude Include="app\src\main\jni\upng.h" />
+    <ClInclude Include="app\src\main\jni\utils.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{f1bb0f05-20a0-4ea7-a326-1516c80260d7}</ProjectGuid>
