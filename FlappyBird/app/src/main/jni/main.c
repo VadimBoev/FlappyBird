@@ -19,8 +19,38 @@ static void handleAppCmd(struct android_app* app, int32_t cmd)
     }
 }
 
+void handle_input(struct android_app* app, AInputEvent* event) 
+{
+    int32_t eventType = AInputEvent_getType(event);
+
+    if (eventType == AINPUT_EVENT_TYPE_MOTION) 
+    {
+        int32_t action = AMotionEvent_getAction(event);
+        int32_t pointerIndex = (action & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
+        int32_t pointerId = AMotionEvent_getPointerId(event, pointerIndex);
+
+        switch (action & AMOTION_EVENT_ACTION_MASK) 
+        {
+        case AMOTION_EVENT_ACTION_DOWN:
+        case AMOTION_EVENT_ACTION_POINTER_DOWN:
+            Log("Touch down at (%f, %f)", AMotionEvent_getX(event, pointerIndex), AMotionEvent_getY(event, pointerIndex));
+            break;
+
+        case AMOTION_EVENT_ACTION_UP:
+        case AMOTION_EVENT_ACTION_POINTER_UP:
+            Log("Touch up at (%f, %f)", AMotionEvent_getX(event, pointerIndex), AMotionEvent_getY(event, pointerIndex));
+            break;
+
+        case AMOTION_EVENT_ACTION_MOVE:
+            Log("Touch move at (%f, %f)", AMotionEvent_getX(event, pointerIndex), AMotionEvent_getY(event, pointerIndex));
+            break;
+        }
+    }
+}
+
 void android_main(struct android_app* state)
 {
+    state->onInputEvent = handle_input;
     state->onAppCmd = handleAppCmd;
 
     while (1)
