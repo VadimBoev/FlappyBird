@@ -22,8 +22,8 @@
 #include <android/asset_manager.h>
 #include <android/asset_manager_jni.h>
 
-// ================================================
-// Data
+// =================== Data ========================
+// init OpenGL ES
 static bool                 g_Initialized = false;
 static EGLDisplay           g_EglDisplay = EGL_NO_DISPLAY;
 static EGLSurface           g_EglSurface = EGL_NO_SURFACE;
@@ -37,7 +37,6 @@ SLObjectItf outputMixObject = NULL;
 SLObjectItf playerObject = NULL;
 SLPlayItf playerPlay;
 SLSeekItf playerSeek;
-
 
 //=================================================
 
@@ -82,7 +81,7 @@ void createEngine()
 {
     SLresult result;
 
-    // Создание объекта движка
+    // create engine
     result = slCreateEngine(&engineObject, 0, NULL, 0, NULL, NULL);
     if (result != SL_RESULT_SUCCESS) 
     {
@@ -90,7 +89,7 @@ void createEngine()
         return;
     }
 
-    // Инициализация объекта движка
+    // init engine
     result = (*engineObject)->Realize(engineObject, SL_BOOLEAN_FALSE);
     if (result != SL_RESULT_SUCCESS) 
     {
@@ -98,7 +97,7 @@ void createEngine()
         return;
     }
 
-    // Получение интерфейса движка
+    // get interface engine
     result = (*engineObject)->GetInterface(engineObject, SL_IID_ENGINE, &engineEngine);
     if (result != SL_RESULT_SUCCESS) 
     {
@@ -106,7 +105,7 @@ void createEngine()
         return;
     }
 
-    // Создание объекта вывода
+    // create output sound
     const SLInterfaceID ids[1] = { SL_IID_ENVIRONMENTALREVERB };
     const SLboolean req[1] = { SL_BOOLEAN_FALSE };
     result = (*engineEngine)->CreateOutputMix(engineEngine, &outputMixObject, 1, ids, req);
@@ -116,7 +115,7 @@ void createEngine()
         return;
     }
 
-    // Инициализация объекта вывода
+    // init output
     result = (*outputMixObject)->Realize(outputMixObject, SL_BOOLEAN_FALSE);
     if (result != SL_RESULT_SUCCESS) 
     {
@@ -129,7 +128,6 @@ void createAudioPlayer(AAssetManager* assetManager, const char* assetPath)
 {
     SLresult result;
 
-    // Открытие файла из assets
     AAsset* audioAsset = AAssetManager_open(assetManager, assetPath, AASSET_MODE_BUFFER);
     if (!audioAsset) 
     {
@@ -137,7 +135,6 @@ void createAudioPlayer(AAssetManager* assetManager, const char* assetPath)
         return;
     }
 
-    // Получение буфера и длины файла
     off_t start, length;
     int fd = AAsset_openFileDescriptor(audioAsset, &start, &length);
     AAsset_close(audioAsset);
@@ -148,16 +145,16 @@ void createAudioPlayer(AAssetManager* assetManager, const char* assetPath)
         return;
     }
 
-    // Создание источника данных
+    // create source data
     SLDataLocator_AndroidFD loc_fd = { SL_DATALOCATOR_ANDROIDFD, fd, start, length };
     SLDataFormat_MIME format_mime = { SL_DATAFORMAT_MIME, NULL, SL_CONTAINERTYPE_MP3 };
     SLDataSource audioSrc = { &loc_fd, &format_mime };
 
-    // Настройка приемника данных
+    // setting receive data
     SLDataLocator_OutputMix loc_outmix = { SL_DATALOCATOR_OUTPUTMIX, outputMixObject };
     SLDataSink audioSnk = { &loc_outmix, NULL };
 
-    // Создание проигрывателя
+    // create player
     const SLInterfaceID ids[3] = { SL_IID_SEEK, SL_IID_MUTESOLO, SL_IID_VOLUME };
     const SLboolean req[3] = { SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE };
     result = (*engineEngine)->CreateAudioPlayer(engineEngine, &playerObject, &audioSrc, &audioSnk, 3, ids, req);
@@ -167,7 +164,7 @@ void createAudioPlayer(AAssetManager* assetManager, const char* assetPath)
         return;
     }
 
-    // Инициализация проигрывателя
+    // init player
     result = (*playerObject)->Realize(playerObject, SL_BOOLEAN_FALSE);
     if (result != SL_RESULT_SUCCESS) 
     {
@@ -175,7 +172,7 @@ void createAudioPlayer(AAssetManager* assetManager, const char* assetPath)
         return;
     }
 
-    // Получение интерфейса воспроизведения
+    // get interface player
     result = (*playerObject)->GetInterface(playerObject, SL_IID_PLAY, &playerPlay);
     if (result != SL_RESULT_SUCCESS) 
     {
@@ -183,7 +180,7 @@ void createAudioPlayer(AAssetManager* assetManager, const char* assetPath)
         return;
     }
 
-    // Получение интерфейса поиска
+    // get interface seek
     result = (*playerObject)->GetInterface(playerObject, SL_IID_SEEK, &playerSeek);
     if (result != SL_RESULT_SUCCESS) 
     {
@@ -191,7 +188,7 @@ void createAudioPlayer(AAssetManager* assetManager, const char* assetPath)
         return;
     }
 
-    // Начало воспроизведения
+    // go play
     result = (*playerPlay)->SetPlayState(playerPlay, SL_PLAYSTATE_PLAYING);
     if (result != SL_RESULT_SUCCESS) 
     {
@@ -437,7 +434,6 @@ void Shutdown()
         return;
 
     // Cleanup
-
     if (g_EglDisplay != EGL_NO_DISPLAY)
     {
         eglMakeCurrent(g_EglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
@@ -455,6 +451,10 @@ void Shutdown()
     g_EglContext = EGL_NO_CONTEXT;
     g_EglSurface = EGL_NO_SURFACE;
     ANativeWindow_release(g_App->window);
+
+    // Delete texture and program
+    glDeleteTextures(1, &texture);
+    glDeleteProgram(program);
 
     g_Initialized = false;
 }
