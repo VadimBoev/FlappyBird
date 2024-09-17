@@ -56,6 +56,12 @@ GLuint t_yellowbird_midflap;
 GLuint t_yellowbird_upflap;
 
 
+// data
+uint64_t cycleTime;
+bool IsDead = false;
+int offsetBase = 0;
+int gameSpeed = 15;
+
 bool InitGame()
 {
     //buttons
@@ -111,8 +117,6 @@ bool InitGame()
     return true;
 }
 
-uint64_t updtime = 0;
-bool lol = false;
 void Render()
 {
 	//RenderTexture(t_pause, 200, 200, 100, 100);
@@ -133,14 +137,28 @@ void Render()
     //background
     RenderTexture(t_background_day, 0, 0, WindowSizeX, WindowSizeY);
 
+    //IsDead ?
+    
+    //cycle base texture
+    if (getTickCount() - cycleTime > 5)
+    {
+        offsetBase -= gameSpeed;
+        cycleTime = getTickCount();
+    }
 
-    RenderTexture(t_base, 0, WindowSizeY - 400, WindowSizeX, 400);
+    RenderTexture(t_base, offsetBase, WindowSizeY - 400, WindowSizeX, 400);
 
+    if (offsetBase < 0)
+    {
+        RenderTexture(t_base, WindowSizeX + offsetBase, WindowSizeY - 400, WindowSizeX, 400);
+    }
 
+    if (offsetBase <= -WindowSizeX)
+    {
+        offsetBase = 0;
+    }
 
-
-
-    RenderTexture(t_yellowbird_downflap, 200, 200, 200, 200);
+    //RenderTexture(t_yellowbird_upflap, 200, 200, 200, 200);
 
 
     
@@ -151,4 +169,52 @@ void ShutdownGame()
 {
     // Delete textures
     glDeleteTextures(1, &t_pause);
+
+    glDeleteTextures(1, &t_ok);
+    glDeleteTextures(1, &t_menu);
+    glDeleteTextures(1, &t_resume);
+    glDeleteTextures(1, &t_score);
+    glDeleteTextures(1, &t_share);
+    glDeleteTextures(1, &t_start);
+    glDeleteTextures(1, &t_ok);
+    
+    glDeleteTextures(1, &t_0);
+    glDeleteTextures(1, &t_1);
+    glDeleteTextures(1, &t_2);
+    glDeleteTextures(1, &t_3);
+    glDeleteTextures(1, &t_4);
+    glDeleteTextures(1, &t_5);
+    glDeleteTextures(1, &t_6);
+    glDeleteTextures(1, &t_7);
+    glDeleteTextures(1, &t_8);
+    glDeleteTextures(1, &t_9);
+
+    glDeleteTextures(1, &t_0_small);
+    glDeleteTextures(1, &t_1_small);
+    glDeleteTextures(1, &t_2_small);
+    glDeleteTextures(1, &t_3_small);
+    glDeleteTextures(1, &t_4_small);
+    glDeleteTextures(1, &t_5_small);
+    glDeleteTextures(1, &t_6_small);
+    glDeleteTextures(1, &t_7_small);
+    glDeleteTextures(1, &t_8_small);
+    glDeleteTextures(1, &t_9_small);
+
+    glDeleteTextures(1, &t_background_day);
+    glDeleteTextures(1, &t_base);
+    glDeleteTextures(1, &t_bronze_medal);
+    glDeleteTextures(1, &t_gameover);
+    glDeleteTextures(1, &t_gold_medal);
+    glDeleteTextures(1, &t_logo);
+    glDeleteTextures(1, &t_message);
+    glDeleteTextures(1, &t_new);
+    glDeleteTextures(1, &t_panel);
+    glDeleteTextures(1, &t_pipe_green);
+    glDeleteTextures(1, &t_platinum_medal);
+    glDeleteTextures(1, &t_silver_medal);
+    glDeleteTextures(1, &t_sparkle_sheet);
+    glDeleteTextures(1, &t_yellowbird_downflap);
+    glDeleteTextures(1, &t_yellowbird_midflap);
+    glDeleteTextures(1, &t_yellowbird_upflap);
+
 }
