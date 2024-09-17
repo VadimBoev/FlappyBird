@@ -37,6 +37,9 @@ GLuint LoadTexture(const char* assetPath)
     unsigned width = upng_get_width(png);
     unsigned height = upng_get_height(png);
 
+    //glEnable(GL_TEXTURE_2D);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     GLuint texture;
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
@@ -49,6 +52,7 @@ GLuint LoadTexture(const char* assetPath)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, upng_get_buffer(png));
 
     upng_free(png);
+
     AAsset_close(file);
 
     if (!texture)

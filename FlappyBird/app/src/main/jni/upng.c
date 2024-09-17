@@ -24,10 +24,31 @@ freely, subject to the following restrictions:
 		distribution.
 */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <limits.h>
+// #include <stdio.h>
+// #include <stdlib.h>
+// #include <string.h>
+// #include <limits.h>
+
+#ifndef NULL
+#define NULL ((void *)0)
+#endif
+
+#ifndef INT_MAX
+// 32bit 0x7FFFFFFF = 2147483647
+// 64bit 0x7FFFFFFF FFFFFFFF = 9223372036854775807
+#define INT_MAX 2147483647
+#endif
+
+// for upng
+#ifndef FILE
+#define FILE void *
+#define fopen(fn, m) NULL
+#define fseek(f, n, s) NULL
+#define ftell(f) -1
+#define rewind(f) NULL
+#define fclose(f) NULL
+#define fread(b, s, n, f) NULL
+#endif
 
 #include "upng.h"
 
@@ -38,6 +59,7 @@ freely, subject to the following restrictions:
 #define CHUNK_IHDR MAKE_DWORD('I','H','D','R')
 #define CHUNK_IDAT MAKE_DWORD('I','D','A','T')
 #define CHUNK_IEND MAKE_DWORD('I','E','N','D')
+#define CHUNK_PLTE MAKE_DWORD('P','L','T','E')
 
 #define FIRST_LENGTH_CODE_INDEX 257
 #define LAST_LENGTH_CODE_INDEX 285
@@ -63,21 +85,22 @@ freely, subject to the following restrictions:
 #define upng_chunk_critical(chunk) (((chunk)[4] & 32) == 0)
 
 typedef enum upng_state {
-	UPNG_ERROR		= -1,
-	UPNG_DECODED	= 0,
-	UPNG_HEADER		= 1,
-	UPNG_NEW		= 2
+	UPNG_ERROR = -1,
+	UPNG_DECODED = 0,
+	UPNG_HEADER = 1,
+	UPNG_NEW = 2
 } upng_state;
 
 typedef enum upng_color {
-	UPNG_LUM		= 0,
-	UPNG_RGB		= 2,
-	UPNG_LUMA		= 4,
-	UPNG_RGBA		= 6
+	UPNG_LUM = 0,
+	UPNG_RGB = 2,
+	UPNG_INDX = 3,
+	UPNG_LUMA = 4,
+	UPNG_RGBA = 6
 } upng_color;
 
 typedef struct upng_source {
-	const unsigned char*	buffer;
+	const unsigned char* buffer;
 	unsigned long			size;
 	char					owning;
 } upng_source;
@@ -90,8 +113,10 @@ struct upng_t {
 	unsigned		color_depth;
 	upng_format		format;
 
-	unsigned char*	buffer;
+	unsigned char* buffer;
 	unsigned long	size;
+
+	unsigned char* palette;
 
 	upng_error		error;
 	unsigned		error_line;
@@ -176,14 +201,14 @@ static const unsigned FIXED_DISTANCE_TREE[NUM_DISTANCE_SYMBOLS * 2] = {
 	29, 30, 31, 0, 0
 };
 
-static unsigned char read_bit(unsigned long *bitpointer, const unsigned char *bitstream)
+static unsigned char read_bit(unsigned long* bitpointer, const unsigned char* bitstream)
 {
 	unsigned char result = (unsigned char)((bitstream[(*bitpointer) >> 3] >> ((*bitpointer) & 0x7)) & 1);
 	(*bitpointer)++;
 	return result;
 }
 
-static unsigned read_bits(unsigned long *bitpointer, const unsigned char *bitstream, unsigned long nbits)
+static unsigned read_bits(unsigned long* bitpointer, const unsigned char* bitstream, unsigned long nbits)
 {
 	unsigned result = 0, i;
 	for (i = 0; i < nbits; i++)
@@ -201,11 +226,11 @@ static void huffman_tree_init(huffman_tree* tree, unsigned* buffer, unsigned num
 }
 
 /*given the code lengths (as stored in the PNG file), generate the tree as defined by Deflate. maxbitlen is the maximum bits that a code in the tree can have. return value is error.*/
-static void huffman_tree_create_lengths(upng_t* upng, huffman_tree* tree, const unsigned *bitlen)
+static void huffman_tree_create_lengths(upng_t* upng, huffman_tree* tree, const unsigned* bitlen)
 {
 	unsigned tree1d[MAX_SYMBOLS];
 	unsigned blcount[MAX_BIT_LENGTH];
-	unsigned nextcode[MAX_BIT_LENGTH+1];
+	unsigned nextcode[MAX_BIT_LENGTH + 1];
 	unsigned bits, n, i;
 	unsigned nodefilled = 0;	/*up to which node it is filled */
 	unsigned treepos = 0;	/*position in the tree (1 of the numcodes columns) */
@@ -250,12 +275,14 @@ static void huffman_tree_create_lengths(upng_t* upng, huffman_tree* tree, const 
 				if (i + 1 == bitlen[n]) {	/*last bit */
 					tree->tree2d[2 * treepos + bit] = n;	/*put the current code in it */
 					treepos = 0;
-				} else {	/*put address of the next step in here, first that address has to be found of course (it's just nodefilled + 1)... */
+				}
+				else {	/*put address of the next step in here, first that address has to be found of course (it's just nodefilled + 1)... */
 					nodefilled++;
 					tree->tree2d[2 * treepos + bit] = nodefilled + tree->numcodes;	/*addresses encoded with numcodes added to it */
 					treepos = nodefilled;
 				}
-			} else {
+			}
+			else {
 				treepos = tree->tree2d[2 * treepos + bit] - tree->numcodes;
 			}
 		}
@@ -268,7 +295,7 @@ static void huffman_tree_create_lengths(upng_t* upng, huffman_tree* tree, const 
 	}
 }
 
-static unsigned huffman_decode_symbol(upng_t *upng, const unsigned char *in, unsigned long *bp, const huffman_tree* codetree, unsigned long inlength)
+static unsigned huffman_decode_symbol(upng_t* upng, const unsigned char* in, unsigned long* bp, const huffman_tree* codetree, unsigned long inlength)
 {
 	unsigned treepos = 0, ct;
 	unsigned char bit;
@@ -295,7 +322,7 @@ static unsigned huffman_decode_symbol(upng_t *upng, const unsigned char *in, uns
 }
 
 /* get the tree of a deflated block with dynamic tree, the tree itself is also Huffman compressed with a known tree*/
-static void get_tree_inflate_dynamic(upng_t* upng, huffman_tree* codetree, huffman_tree* codetreeD, huffman_tree* codelengthcodetree, const unsigned char *in, unsigned long *bp, unsigned long inlength)
+static void get_tree_inflate_dynamic(upng_t* upng, huffman_tree* codetree, huffman_tree* codetreeD, huffman_tree* codelengthcodetree, const unsigned char* in, unsigned long* bp, unsigned long inlength)
 {
 	unsigned codelengthcode[NUM_CODE_LENGTH_CODES];
 	unsigned bitlen[NUM_DEFLATE_CODE_SYMBOLS];
@@ -321,7 +348,8 @@ static void get_tree_inflate_dynamic(upng_t* upng, huffman_tree* codetree, huffm
 	for (i = 0; i < NUM_CODE_LENGTH_CODES; i++) {
 		if (i < hclen) {
 			codelengthcode[CLCL[i]] = read_bits(bp, in, 3);
-		} else {
+		}
+		else {
 			codelengthcode[CLCL[i]] = 0;	/*if not, it must stay 0 */
 		}
 	}
@@ -344,11 +372,13 @@ static void get_tree_inflate_dynamic(upng_t* upng, huffman_tree* codetree, huffm
 		if (code <= 15) {	/*a length code */
 			if (i < hlit) {
 				bitlen[i] = code;
-			} else {
+			}
+			else {
 				bitlenD[i - hlit] = code;
 			}
 			i++;
-		} else if (code == 16) {	/*repeat previous */
+		}
+		else if (code == 16) {	/*repeat previous */
 			unsigned replength = 3;	/*read in the 2 bits that indicate repeat length (3-6) */
 			unsigned value;	/*set value to the previous code */
 
@@ -361,7 +391,8 @@ static void get_tree_inflate_dynamic(upng_t* upng, huffman_tree* codetree, huffm
 
 			if ((i - 1) < hlit) {
 				value = bitlen[i - 1];
-			} else {
+			}
+			else {
 				value = bitlenD[i - hlit - 1];
 			}
 
@@ -375,12 +406,14 @@ static void get_tree_inflate_dynamic(upng_t* upng, huffman_tree* codetree, huffm
 
 				if (i < hlit) {
 					bitlen[i] = value;
-				} else {
+				}
+				else {
 					bitlenD[i - hlit] = value;
 				}
 				i++;
 			}
-		} else if (code == 17) {	/*repeat "0" 3-10 times */
+		}
+		else if (code == 17) {	/*repeat "0" 3-10 times */
 			unsigned replength = 3;	/*read in the bits that indicate repeat length */
 			if ((*bp) >> 3 >= inlength) {
 				SET_ERROR(upng, UPNG_EMALFORMED);
@@ -400,12 +433,14 @@ static void get_tree_inflate_dynamic(upng_t* upng, huffman_tree* codetree, huffm
 
 				if (i < hlit) {
 					bitlen[i] = 0;
-				} else {
+				}
+				else {
 					bitlenD[i - hlit] = 0;
 				}
 				i++;
 			}
-		} else if (code == 18) {	/*repeat "0" 11-138 times */
+		}
+		else if (code == 18) {	/*repeat "0" 11-138 times */
 			unsigned replength = 11;	/*read in the bits that indicate repeat length */
 			/* error, bit pointer jumps past memory */
 			if ((*bp) >> 3 >= inlength) {
@@ -428,7 +463,8 @@ static void get_tree_inflate_dynamic(upng_t* upng, huffman_tree* codetree, huffm
 					bitlenD[i - hlit] = 0;
 				i++;
 			}
-		} else {
+		}
+		else {
 			/* somehow an unexisting code appeared. This can never happen. */
 			SET_ERROR(upng, UPNG_EMALFORMED);
 			break;
@@ -450,7 +486,7 @@ static void get_tree_inflate_dynamic(upng_t* upng, huffman_tree* codetree, huffm
 }
 
 /*inflate a block with dynamic of fixed Huffman tree*/
-static void inflate_huffman(upng_t* upng, unsigned char* out, unsigned long outsize, const unsigned char *in, unsigned long *bp, unsigned long *pos, unsigned long inlength, unsigned btype)
+static void inflate_huffman(upng_t* upng, unsigned char* out, unsigned long outsize, const unsigned char* in, unsigned long* bp, unsigned long* pos, unsigned long inlength, unsigned btype)
 {
 	unsigned codetree_buffer[DEFLATE_CODE_BUFFER_SIZE];
 	unsigned codetreeD_buffer[DISTANCE_BUFFER_SIZE];
@@ -463,7 +499,8 @@ static void inflate_huffman(upng_t* upng, unsigned char* out, unsigned long outs
 		/* fixed trees */
 		huffman_tree_init(&codetree, (unsigned*)FIXED_DEFLATE_CODE_TREE, NUM_DEFLATE_CODE_SYMBOLS, DEFLATE_CODE_BITLEN);
 		huffman_tree_init(&codetreeD, (unsigned*)FIXED_DISTANCE_TREE, NUM_DISTANCE_SYMBOLS, DISTANCE_BITLEN);
-	} else if (btype == 2) {
+	}
+	else if (btype == 2) {
 		/* dynamic trees */
 		unsigned codelengthcodetree_buffer[CODE_LENGTH_BUFFER_SIZE];
 		huffman_tree codelengthcodetree;
@@ -483,7 +520,8 @@ static void inflate_huffman(upng_t* upng, unsigned char* out, unsigned long outs
 		if (code == 256) {
 			/* end code */
 			done = 1;
-		} else if (code <= 255) {
+		}
+		else if (code <= 255) {
 			/* literal symbol */
 			if ((*pos) >= outsize) {
 				SET_ERROR(upng, UPNG_EMALFORMED);
@@ -492,7 +530,8 @@ static void inflate_huffman(upng_t* upng, unsigned char* out, unsigned long outs
 
 			/* store output */
 			out[(*pos)++] = (unsigned char)(code);
-		} else if (code >= FIRST_LENGTH_CODE_INDEX && code <= LAST_LENGTH_CODE_INDEX) {	/*length code */
+		}
+		else if (code >= FIRST_LENGTH_CODE_INDEX && code <= LAST_LENGTH_CODE_INDEX) {	/*length code */
 			/* part 1: get length base */
 			unsigned long length = LENGTH_BASE[code - FIRST_LENGTH_CODE_INDEX];
 			unsigned codeD, distance, numextrabitsD;
@@ -554,7 +593,7 @@ static void inflate_huffman(upng_t* upng, unsigned char* out, unsigned long outs
 	}
 }
 
-static void inflate_uncompressed(upng_t* upng, unsigned char* out, unsigned long outsize, const unsigned char *in, unsigned long *bp, unsigned long *pos, unsigned long inlength)
+static void inflate_uncompressed(upng_t* upng, unsigned char* out, unsigned long outsize, const unsigned char* in, unsigned long* bp, unsigned long* pos, unsigned long inlength)
 {
 	unsigned long p;
 	unsigned len, nlen, n;
@@ -601,7 +640,7 @@ static void inflate_uncompressed(upng_t* upng, unsigned char* out, unsigned long
 }
 
 /*inflate the deflated data (cfr. deflate spec); return value is the error*/
-static upng_error uz_inflate_data(upng_t* upng, unsigned char* out, unsigned long outsize, const unsigned char *in, unsigned long insize, unsigned long inpos)
+static upng_error uz_inflate_data(upng_t* upng, unsigned char* out, unsigned long outsize, const unsigned char* in, unsigned long insize, unsigned long inpos)
 {
 	unsigned long bp = 0;	/*bit pointer in the "in" data, current byte is bp >> 3, current bit is bp & 0x7 (from lsb to msb of the byte) */
 	unsigned long pos = 0;	/*byte position in the out buffer */
@@ -625,9 +664,11 @@ static upng_error uz_inflate_data(upng_t* upng, unsigned char* out, unsigned lon
 		if (btype == 3) {
 			SET_ERROR(upng, UPNG_EMALFORMED);
 			return upng->error;
-		} else if (btype == 0) {
+		}
+		else if (btype == 0) {
 			inflate_uncompressed(upng, out, outsize, &in[inpos], &bp, &pos, insize);	/*no compression */
-		} else {
+		}
+		else {
 			inflate_huffman(upng, out, outsize, &in[inpos], &bp, &pos, insize, btype);	/*compression, btype 01 or 10 */
 		}
 
@@ -640,7 +681,7 @@ static upng_error uz_inflate_data(upng_t* upng, unsigned char* out, unsigned lon
 	return upng->error;
 }
 
-static upng_error uz_inflate(upng_t* upng, unsigned char *out, unsigned long outsize, const unsigned char *in, unsigned long insize)
+static upng_error uz_inflate(upng_t* upng, unsigned char* out, unsigned long outsize, const unsigned char* in, unsigned long insize)
 {
 	/* we require two bytes for the zlib data header */
 	if (insize < 2) {
@@ -688,7 +729,7 @@ static int paeth_predictor(int a, int b, int c)
 		return c;
 }
 
-static void unfilter_scanline(upng_t* upng, unsigned char *recon, const unsigned char *scanline, const unsigned char *precon, unsigned long bytewidth, unsigned char filterType, unsigned long length)
+static void unfilter_scanline(upng_t* upng, unsigned char* recon, const unsigned char* scanline, const unsigned char* precon, unsigned long bytewidth, unsigned char filterType, unsigned long length)
 {
 	/*
 	   For PNG filter method 0
@@ -724,7 +765,8 @@ static void unfilter_scanline(upng_t* upng, unsigned char *recon, const unsigned
 				recon[i] = scanline[i] + precon[i] / 2;
 			for (i = bytewidth; i < length; i++)
 				recon[i] = scanline[i] + ((recon[i - bytewidth] + precon[i]) / 2);
-		} else {
+		}
+		else {
 			for (i = 0; i < bytewidth; i++)
 				recon[i] = scanline[i];
 			for (i = bytewidth; i < length; i++)
@@ -737,7 +779,8 @@ static void unfilter_scanline(upng_t* upng, unsigned char *recon, const unsigned
 				recon[i] = (unsigned char)(scanline[i] + paeth_predictor(0, precon[i], 0));
 			for (i = bytewidth; i < length; i++)
 				recon[i] = (unsigned char)(scanline[i] + paeth_predictor(recon[i - bytewidth], precon[i], precon[i - bytewidth]));
-		} else {
+		}
+		else {
 			for (i = 0; i < bytewidth; i++)
 				recon[i] = scanline[i];
 			for (i = bytewidth; i < length; i++)
@@ -750,7 +793,7 @@ static void unfilter_scanline(upng_t* upng, unsigned char *recon, const unsigned
 	}
 }
 
-static void unfilter(upng_t* upng, unsigned char *out, const unsigned char *in, unsigned w, unsigned h, unsigned bpp)
+static void unfilter(upng_t* upng, unsigned char* out, const unsigned char* in, unsigned w, unsigned h, unsigned bpp)
 {
 	/*
 	   For PNG filter method 0
@@ -761,7 +804,7 @@ static void unfilter(upng_t* upng, unsigned char *out, const unsigned char *in, 
 	 */
 
 	unsigned y;
-	unsigned char *prevline = 0;
+	unsigned char* prevline = 0;
 
 	unsigned long bytewidth = (bpp + 7) / 8;	/*bytewidth is used for filtering, is 1 when bpp < 8, number of bytes per pixel otherwise */
 	unsigned long linebytes = (w * bpp + 7) / 8;
@@ -780,7 +823,7 @@ static void unfilter(upng_t* upng, unsigned char *out, const unsigned char *in, 
 	}
 }
 
-static void remove_padding_bits(unsigned char *out, const unsigned char *in, unsigned long olinebits, unsigned long ilinebits, unsigned h)
+static void remove_padding_bits(unsigned char* out, const unsigned char* in, unsigned long olinebits, unsigned long ilinebits, unsigned h)
 {
 	/*
 	   After filtering there are still padding bpp if scanlines have non multiple of 8 bit amounts. They need to be removed (except at last scanline of (Adam7-reduced) image) before working with pure image buffers for the Adam7 code, the color convert code and the output to the user.
@@ -808,7 +851,7 @@ static void remove_padding_bits(unsigned char *out, const unsigned char *in, uns
 }
 
 /*out must be buffer big enough to contain full image, and in must contain the full decompressed data from the IDAT chunks*/
-static void post_process_scanlines(upng_t* upng, unsigned char *out, unsigned char *in, const upng_t* info_png)
+static void post_process_scanlines(upng_t* upng, unsigned char* out, unsigned char* in, const upng_t* info_png)
 {
 	unsigned bpp = upng_get_bpp(info_png);
 	unsigned w = info_png->width;
@@ -825,7 +868,8 @@ static void post_process_scanlines(upng_t* upng, unsigned char *out, unsigned ch
 			return;
 		}
 		remove_padding_bits(out, in, w * bpp, ((w * bpp + 7) / 8) * 8, h);
-	} else {
+	}
+	else {
 		unfilter(upng, out, in, w, h, bpp);	/*we can immediatly filter into the out buffer, no other steps needed */
 	}
 }
@@ -873,6 +917,19 @@ static upng_format determine_format(upng_t* upng) {
 			return UPNG_RGBA8;
 		case 16:
 			return UPNG_RGBA16;
+		default:
+			return UPNG_BADFORMAT;
+		}
+	case UPNG_INDX:
+		switch (upng->color_depth) {
+		case 1:
+			return UPNG_INDEX1;
+		case 2:
+			return UPNG_INDEX2;
+		case 4:
+			return UPNG_INDEX4;
+		case 8:
+			return UPNG_INDEX8;
 		default:
 			return UPNG_BADFORMAT;
 		}
@@ -963,10 +1020,12 @@ upng_error upng_header(upng_t* upng)
 /*read a PNG, the result will be in the same color type as the PNG (hence "generic")*/
 upng_error upng_decode(upng_t* upng)
 {
-	const unsigned char *chunk;
+	const unsigned char* chunk;
 	unsigned char* compressed;
 	unsigned char* inflated;
+	unsigned char* palette = NULL;
 	unsigned long compressed_size = 0, compressed_index = 0;
+	unsigned long palette_size = 0;
 	unsigned long inflated_size;
 	upng_error error;
 
@@ -1000,7 +1059,7 @@ upng_error upng_decode(upng_t* upng)
 	 * verify general well-formed-ness */
 	while (chunk < upng->source.buffer + upng->source.size) {
 		unsigned long length;
-		const unsigned char *data;	/*the data in the chunk */
+		// const unsigned char *data;	/*the data in the chunk */
 
 		/* make sure chunk header is not larger than the total compressed */
 		if ((unsigned long)(chunk - upng->source.buffer + 12) > upng->source.size) {
@@ -1022,19 +1081,24 @@ upng_error upng_decode(upng_t* upng)
 		}
 
 		/* get pointer to payload */
-		data = chunk + 8;
+		// data = chunk + 8;
 
 		/* parse chunks */
 		if (upng_chunk_type(chunk) == CHUNK_IDAT) {
 			compressed_size += length;
-		} else if (upng_chunk_type(chunk) == CHUNK_IEND) {
+		}
+		else if (upng_chunk_type(chunk) == CHUNK_PLTE) {
+			palette_size = length;
+		}
+		else if (upng_chunk_type(chunk) == CHUNK_IEND) {
 			break;
-		} else if (upng_chunk_critical(chunk)) {
+		}
+		else if (upng_chunk_critical(chunk)) {
 			SET_ERROR(upng, UPNG_EUNSUPPORTED);
 			return upng->error;
 		}
 
-		chunk += upng_chunk_length(chunk) + 12;
+		chunk += length + 12;
 	}
 
 	/* allocate enough space for the (compressed and filtered) image data */
@@ -1044,31 +1108,46 @@ upng_error upng_decode(upng_t* upng)
 		return upng->error;
 	}
 
+	if (palette_size) {
+		palette = (unsigned char*)malloc(palette_size);
+		if (palette == NULL) {
+			free(compressed);
+			SET_ERROR(upng, UPNG_ENOMEM);
+			return upng->error;
+		}
+	}
+
 	/* scan through the chunks again, this time copying the values into
 	 * our compressed buffer.  there's no reason to validate anything a second time. */
 	chunk = upng->source.buffer + 33;
 	while (chunk < upng->source.buffer + upng->source.size) {
 		unsigned long length;
-		const unsigned char *data;	/*the data in the chunk */
+		const unsigned char* data;	/*the data in the chunk */
 
 		length = upng_chunk_length(chunk);
-		data = chunk + 8;
 
 		/* parse chunks */
 		if (upng_chunk_type(chunk) == CHUNK_IDAT) {
+			data = chunk + 8;
 			memcpy(compressed + compressed_index, data, length);
 			compressed_index += length;
-		} else if (upng_chunk_type(chunk) == CHUNK_IEND) {
+		}
+		else if (upng_chunk_type(chunk) == CHUNK_PLTE) {
+			data = chunk + 8;
+			memcpy(palette, data, palette_size);
+		}
+		else if (upng_chunk_type(chunk) == CHUNK_IEND) {
 			break;
 		}
 
-		chunk += upng_chunk_length(chunk) + 12;
+		chunk += length + 12;
 	}
 
 	/* allocate space to store inflated (but still filtered) data */
 	inflated_size = ((upng->width * (upng->height * upng_get_bpp(upng) + 7)) / 8) + upng->height;
 	inflated = (unsigned char*)malloc(inflated_size);
 	if (inflated == NULL) {
+		free(palette);
 		free(compressed);
 		SET_ERROR(upng, UPNG_ENOMEM);
 		return upng->error;
@@ -1077,6 +1156,7 @@ upng_error upng_decode(upng_t* upng)
 	/* decompress image data */
 	error = uz_inflate(upng, inflated, inflated_size, compressed, compressed_size);
 	if (error != UPNG_EOK) {
+		free(palette);
 		free(compressed);
 		free(inflated);
 		return upng->error;
@@ -1089,6 +1169,7 @@ upng_error upng_decode(upng_t* upng)
 	upng->size = (upng->height * upng->width * upng_get_bpp(upng) + 7) / 8;
 	upng->buffer = (unsigned char*)malloc(upng->size);
 	if (upng->buffer == NULL) {
+		free(palette);
 		free(inflated);
 		upng->size = 0;
 		SET_ERROR(upng, UPNG_ENOMEM);
@@ -1100,10 +1181,14 @@ upng_error upng_decode(upng_t* upng)
 	free(inflated);
 
 	if (upng->error != UPNG_EOK) {
+		free(palette);
 		free(upng->buffer);
 		upng->buffer = NULL;
 		upng->size = 0;
-	} else {
+	}
+	else {
+		/* palette */
+		upng->palette = palette;
 		upng->state = UPNG_DECODED;
 	}
 
@@ -1157,11 +1242,11 @@ upng_t* upng_new_from_bytes(const unsigned char* buffer, unsigned long size)
 	return upng;
 }
 
-upng_t* upng_new_from_file(const char *filename)
+upng_t* upng_new_from_file(const char* filename)
 {
 	upng_t* upng;
-	unsigned char *buffer;
-	FILE *file;
+	unsigned char* buffer;
+	FILE* file;
 	long size;
 
 	upng = upng_new();
@@ -1181,7 +1266,7 @@ upng_t* upng_new_from_file(const char *filename)
 	rewind(file);
 
 	/* read contents of the file into the vector */
-	buffer = (unsigned char *)malloc((unsigned long)size);
+	buffer = (unsigned char*)malloc((unsigned long)size);
 	if (buffer == NULL) {
 		fclose(file);
 		SET_ERROR(upng, UPNG_ENOMEM);
@@ -1200,6 +1285,11 @@ upng_t* upng_new_from_file(const char *filename)
 
 void upng_free(upng_t* upng)
 {
+	/* deallocate palette */
+	if (upng->palette != NULL) {
+		free(upng->palette);
+	}
+
 	/* deallocate image buffer */
 	if (upng->buffer != NULL) {
 		free(upng->buffer);
@@ -1248,6 +1338,8 @@ unsigned upng_get_components(const upng_t* upng)
 		return 2;
 	case UPNG_RGBA:
 		return 4;
+	case UPNG_INDX:
+		return 1;
 	default:
 		return 0;
 	}
@@ -1278,4 +1370,9 @@ const unsigned char* upng_get_buffer(const upng_t* upng)
 unsigned upng_get_size(const upng_t* upng)
 {
 	return upng->size;
+}
+
+const unsigned char* upng_get_palette(const upng_t* upng)
+{
+	return upng->palette;
 }

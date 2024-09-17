@@ -4,6 +4,7 @@
 #include "utils.h"
 #include "texture.h"
 #include "audio.h"
+#include "init.h"
 
 //buttons
 GLuint t_pause;
@@ -106,6 +107,7 @@ bool InitGame()
     t_yellowbird_midflap = LoadTexture("sprites/yellowbird-midflap.png");
     t_yellowbird_upflap = LoadTexture("sprites/yellowbird-upflap.png");
 
+
     return true;
 }
 
@@ -113,20 +115,35 @@ uint64_t updtime = 0;
 bool lol = false;
 void Render()
 {
-	RenderTexture(t_pause, 200, 200, 100, 100);
+	//RenderTexture(t_pause, 200, 200, 100, 100);
+    //
+    //if (!lol)
+    //{
+    //    updtime = getTickCount();
+    //    lol = true;
+    //}
+    //
+    //if (getTickCount() - updtime > 1500)
+    //{
+    //    PlayAudio("audio/point.mp3");
+    //    Log("robet?");
+    //    updtime = getTickCount();
+    //}
 
-    if (!lol)
-    {
-        updtime = getTickCount();
-        lol = true;
-    }
+    //background
+    RenderTexture(t_background_day, 0, 0, WindowSizeX, WindowSizeY);
+
+
+    RenderTexture(t_base, 0, WindowSizeY - 400, WindowSizeX, 400);
+
+
+
+
+
+    RenderTexture(t_yellowbird_downflap, 200, 200, 200, 200);
+
+
     
-    if (getTickCount() - updtime > 1500)
-    {
-        PlayAudio("audio/point.mp3");
-        Log("robet?");
-        updtime = getTickCount();
-    }
 
 }
 
