@@ -135,7 +135,7 @@ void Render()
     //}
 
     //background
-    RenderTexture(t_background_day, 0, 0, WindowSizeX, WindowSizeY);
+    RenderTexture(t_background_day, 0, 0, WindowSizeX, WindowSizeY - 100);
 
     //IsDead ?
     
@@ -146,11 +146,11 @@ void Render()
         cycleTime = getTickCount();
     }
 
-    RenderTexture(t_base, offsetBase, WindowSizeY - 400, WindowSizeX, 400);
+    RenderTexture(t_base, offsetBase, WindowSizeY - 600, WindowSizeX, 600);
 
     if (offsetBase < 0)
     {
-        RenderTexture(t_base, WindowSizeX + offsetBase, WindowSizeY - 400, WindowSizeX, 400);
+        RenderTexture(t_base, WindowSizeX + offsetBase, WindowSizeY - 600, WindowSizeX, 600);
     }
 
     if (offsetBase <= -WindowSizeX)
@@ -158,12 +158,34 @@ void Render()
         offsetBase = 0;
     }
 
-    //RenderTexture(t_yellowbird_upflap, 200, 200, 200, 200);
+    //logo
+    RenderTexture(t_logo, 100, 500, 600, 125);
+    RenderTexture(t_yellowbird_downflap, 800, 500, 120, 100);
 
 
-    
+    //button START
+    if (Button(t_start, 150, 1600, 280, 110))
+    {
+
+    }
+
+
+    //button SCORE
+    if (Button(t_score, 650, 1600, 280, 110))
+    {
+
+    }
+
 
 }
+
+bool Button(GLuint textureid, float posX, float posY, float width, float height)
+{
+    RenderTexture(textureid, posX, posY, width, height);
+
+    return false;
+}
+
 
 void ShutdownGame()
 {
