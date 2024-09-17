@@ -17,15 +17,12 @@ const char* fragmentShaderSource =
     "uniform sampler2D uTexture;\n"
     "void main() {\n"
     "    vec4 texColor = texture2D(uTexture, vTexCoord);\n"
-    "    // ¬ычисл€ем €ркость пиксел€\n"
-    "    float brightness = (texColor.r + texColor.g + texColor.b) / 3.0;\n"
-    "    // ”станавливаем альфа-канал в зависимости от €ркости\n"
-    "    float alpha = 1.0;\n"
-    "    if (brightness < 0.01) {\n"
-    "        alpha = 0.0;\n"
+    "    if (texColor.rgb == vec3(0.0)) {\n"
+    "        texColor.a = 0.0;\n"
     "    }\n"
-    "    gl_FragColor = vec4(texColor.rgb, alpha);\n"
+    "    gl_FragColor = texColor;\n"
     "}\n";
+
 
 GLuint loadShader(GLenum type, const char* source)
 {
