@@ -51,6 +51,16 @@ GLuint LoadTexture(const char* assetPath)
     upng_free(png);
     AAsset_close(file);
 
+    if (!texture)
+    {
+        Log("Error load texture '%s'", assetPath);
+        return 0;
+    }
+    else
+    {
+        Log("Texture '%s' is loaded!", assetPath);
+    }
+
     return texture;
 }
 
