@@ -2,7 +2,6 @@
 #include "init.h"
 #include "utils.h"
 #include "mouse.h"
-MouseState mouse;
 
 static void handleAppCmd(struct android_app* app, int32_t cmd)
 {
@@ -56,7 +55,7 @@ void handle_input(struct android_app* app, AInputEvent* event)
             break;
         }
 
-        mouse_update(&mouse, x, y, isDown, isReleased, isMoved);
+        MouseUpdate(&mouse, x, y, isDown, isReleased, isMoved);
     }
 }
 
@@ -66,7 +65,7 @@ void android_main(struct android_app* state)
     state->onInputEvent = handle_input;
     state->onAppCmd = handleAppCmd;
 
-    mouse_init(&mouse);
+    MouseInit(&mouse);
 
     while (1)
     {
@@ -89,7 +88,7 @@ void android_main(struct android_app* state)
         if (g_Initialized) 
         {
             MainLoopStep();
-            mouse_reset(&mouse);
+            MouseReset(&mouse);
         }
     }
 }

@@ -5,6 +5,7 @@
 #include "texture.h"
 #include "audio.h"
 #include "init.h"
+#include "mouse.h"
 
 //buttons
 GLuint t_pause;
@@ -60,7 +61,10 @@ GLuint t_yellowbird_upflap;
 uint64_t cycleTime;
 bool IsDead = false;
 int offsetBase = 0;
-int gameSpeed = 15;
+int gameSpeed = 10;
+bool IsGameStarted = false;
+bool blackscreen = false;
+uint64_t blackscreen_time;
 
 bool InitGame()
 {
@@ -158,30 +162,45 @@ void Render()
         offsetBase = 0;
     }
 
-    //logo
-    RenderTexture(t_logo, 100, 500, 600, 125);
-    RenderTexture(t_yellowbird_downflap, 800, 500, 120, 100);
-
-
-    //button START
-    if (Button(t_start, 150, 1600, 280, 110))
+    if (!IsGameStarted)
     {
+        //logo
+        RenderTexture(t_logo, 100, 500, 600, 125);
+        RenderTexture(t_yellowbird_downflap, 800, 500, 120, 100);
 
+
+        //button START
+        if (Button(t_start, 150, 1600, 280, 110))
+        {
+            blackscreen = true;
+        }
+
+
+        //button SCORE
+        if (Button(t_score, 650, 1600, 280, 110))
+        {
+
+        }
     }
 
-
-    //button SCORE
-    if (Button(t_score, 650, 1600, 280, 110))
+    if (blackscreen)
     {
-
+        //...
     }
-
 
 }
 
 bool Button(GLuint textureid, float posX, float posY, float width, float height)
 {
     RenderTexture(textureid, posX, posY, width, height);
+
+    if (mouse.isReleased)
+    {
+        if (IsMouseInSquare(mouse.x, mouse.y, posX, posY, width, height))
+        {
+            return true;
+        }
+    }
 
     return false;
 }
@@ -191,7 +210,6 @@ void ShutdownGame()
 {
     // Delete textures
     glDeleteTextures(1, &t_pause);
-
     glDeleteTextures(1, &t_ok);
     glDeleteTextures(1, &t_menu);
     glDeleteTextures(1, &t_resume);

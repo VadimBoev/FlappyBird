@@ -1,6 +1,7 @@
 #include "mouse.h"
+MouseState mouse;
 
-void mouse_init(MouseState* mouse) 
+void MouseInit(MouseState* mouse) 
 {
     mouse->x = 0.0f;
     mouse->y = 0.0f;
@@ -9,7 +10,7 @@ void mouse_init(MouseState* mouse)
     mouse->isMoved = false;
 }
 
-void mouse_update(MouseState* mouse, float x, float y, bool down, bool released, bool moved) 
+void MouseUpdate(MouseState* mouse, float x, float y, bool down, bool released, bool moved) 
 {
     mouse->x = x;
     mouse->y = y;
@@ -18,9 +19,22 @@ void mouse_update(MouseState* mouse, float x, float y, bool down, bool released,
     mouse->isMoved = moved;
 }
 
-void mouse_reset(MouseState* mouse) 
+void MouseReset(MouseState* mouse) 
 {
     mouse->isDown = false;
     mouse->isReleased = false;
     mouse->isMoved = false;
+}
+
+bool IsMouseInSquare(int mouse_x, int mouse_y, int x, int y, int w, int h) 
+{
+    if (x <= mouse_x && mouse_x <= x + w &&
+        y <= mouse_y && mouse_y <= y + h) 
+    {
+        return true;
+    }
+    else 
+    {
+        return false;
+    }
 }
