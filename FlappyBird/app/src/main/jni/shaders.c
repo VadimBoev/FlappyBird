@@ -2,6 +2,7 @@
 #include "shaders.h"
 #include "utils.h"
 
+//fix by Tempa
 const char* vertexShaderSource =
     "attribute vec4 aPosition;\n"
     "attribute vec2 aTexCoord;\n"
