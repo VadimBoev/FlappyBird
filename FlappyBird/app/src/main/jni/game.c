@@ -71,7 +71,8 @@ enum GameState {
     IDLE,
     FADE_IN,
     FADE_OUT,
-    READY_GAME
+    READY_GAME,
+    GO_GAME
 };
 
 enum GameState currentState = IDLE;
@@ -136,8 +137,6 @@ void Render()
 {
     //background
     RenderTexture(t_background_day, 0, 0, WindowSizeX, WindowSizeY - 100);
-
-    //IsDead ?
     
     //cycle base texture
     if (getTickCount() - cycleTime > 5)
@@ -165,20 +164,28 @@ void Render()
         RenderTexture(t_yellowbird_downflap, 800, 500, 120, 100);
 
         // button START
-        if (Button(t_start, 150, 1600, 280, 110))
+        if (ButtonBump(t_start, 150, 1600, 280, 110))
         {
             currentState = FADE_IN;
         }
 
         // button SCORE
-        if (Button(t_score, 650, 1600, 280, 110))
+        if (ButtonBump(t_score, 650, 1600, 280, 110))
         {
 
         }
     }
-    else if (currentState == FADE_OUT || currentState == READY_GAME)
+    else if (currentState == FADE_OUT || currentState == READY_GAME) //Ready?
     {
-        CreateBox(0xFFFFFFFF, 200, 200, 100, 100);
+        RenderTexture(t_message, 100, 200, WindowSizeX - 100 * 2, 1200);
+        if (Button(0, 0, WindowSizeX, WindowSizeY))
+        {
+            currentState = GO_GAME;
+        }
+    }
+    else if (currentState == GO_GAME)
+    {
+
     }
 
     if (currentState == FADE_IN)
@@ -209,20 +216,40 @@ void Render()
 
 }
 
-bool Button(GLuint textureid, float posX, float posY, float width, float height)
+bool ButtonBump(GLuint textureid, float posX, float posY, float width, float height)
 {
-    RenderTexture(textureid, posX, posY, width, height);
+    bool released = false;
 
     if (mouse.isReleased)
     {
         if (IsMouseInSquare(mouse.x, mouse.y, posX, posY, width, height))
         {
-            return true;
+            released = true;
         }
     }
 
-    return false;
+    if (released) { posY += 25; }
+
+    RenderTexture(textureid, posX, posY, width, height);
+
+    return released;
 }
+
+bool Button(float posX, float posY, float width, float height)
+{
+    bool released = false;
+
+    if (mouse.isReleased)
+    {
+        if (IsMouseInSquare(mouse.x, mouse.y, posX, posY, width, height))
+        {
+            released = true;
+        }
+    }
+
+    return released;
+}
+
 
 
 void ShutdownGame()
