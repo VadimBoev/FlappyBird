@@ -63,8 +63,19 @@ bool IsDead = false;
 int offsetBase = 0;
 int gameSpeed = 10;
 bool IsGameStarted = false;
-bool blackscreen = false;
-uint64_t blackscreen_time;
+
+int alpha = 0;
+bool fadeOut = false;
+
+enum GameState {
+    IDLE,
+    FADE_IN,
+    FADE_OUT,
+    READY_GAME
+};
+
+enum GameState currentState = IDLE;
+
 
 bool InitGame()
 {
@@ -121,25 +132,8 @@ bool InitGame()
     return true;
 }
 
-float angle;
-uint64_t timeAngle;
 void Render()
 {
-	//RenderTexture(t_pause, 200, 200, 100, 100);
-    //
-    //if (!lol)
-    //{
-    //    updtime = getTickCount();
-    //    lol = true;
-    //}
-    //
-    //if (getTickCount() - updtime > 1500)
-    //{
-    //    PlayAudio("audio/point.mp3");
-    //    Log("robet?");
-    //    updtime = getTickCount();
-    //}
-
     //background
     RenderTexture(t_background_day, 0, 0, WindowSizeX, WindowSizeY - 100);
 
@@ -164,36 +158,53 @@ void Render()
         offsetBase = 0;
     }
 
-    if (!blackscreen)
+    if (currentState == IDLE || currentState == FADE_IN)
     {
-        //logo
+
         RenderTexture(t_logo, 100, 500, 600, 125);
-        //RenderTexture(t_yellowbird_downflap, 800, 500, 120, 100);
+        RenderTexture(t_yellowbird_downflap, 800, 500, 120, 100);
 
-        if (getTickCount() - timeAngle > 10)
-        {
-            angle += 1.0f;
-            if (angle >= 360) angle = 0;
-            timeAngle = getTickCount();
-        }
-        RenderTexturePro(t_yellowbird_downflap, 800, 550, 100, 75, angle);
-
-        //button START
+        // button START
         if (Button(t_start, 150, 1600, 280, 110))
         {
-            blackscreen = true;
+            currentState = FADE_IN;
         }
 
-
-        //button SCORE
+        // button SCORE
         if (Button(t_score, 650, 1600, 280, 110))
         {
 
         }
     }
-    else
+    else if (currentState == FADE_OUT || currentState == READY_GAME)
     {
-        CreateBox(0xFFFFFFFF, 300, 300, 200, 200);
+        CreateBox(0xFFFFFFFF, 200, 200, 100, 100);
+    }
+
+    if (currentState == FADE_IN)
+    {
+        alpha += 5;
+        if (alpha >= 255)
+        {
+            alpha = 255;
+            currentState = FADE_OUT;
+        }
+    }
+    else if (currentState == FADE_OUT)
+    {
+        alpha -= 5;
+        if (alpha <= 0)
+        {
+            alpha = 0;
+            currentState = READY_GAME;
+        }
+    }
+
+    // render black screen
+    if (currentState == FADE_IN || currentState == FADE_OUT) 
+    {
+        uint32_t color = 0x00000000 | (alpha << 24);
+        CreateBox(color, 0, 0, WindowSizeX, WindowSizeY);
     }
 
 }
