@@ -18,7 +18,48 @@ struct android_app* g_App = NULL;
 int32_t WindowSizeX = 0;
 int32_t WindowSizeY = 0;
 
-GLuint program;
+GLuint textureProgram;
+
+GLuint colorProgram;
+GLuint gPositionHandle;
+GLuint gColorHandle;
+
+//fix by Tempa
+const char* vertexShaderTexture =
+    "attribute vec4 aPosition;\n"
+    "attribute vec2 aTexCoord;\n"
+    "varying vec2 vTexCoord;\n"
+    "void main() {\n"
+    "    gl_Position = aPosition;\n"
+    "    vTexCoord = aTexCoord;\n"
+    "}\n";
+
+const char* fragmentShaderTexture =
+    "precision mediump float;\n"
+    "varying vec2 vTexCoord;\n"
+    "uniform sampler2D uTexture;\n"
+    "void main() {\n"
+    "    vec4 texColor = texture2D(uTexture, vTexCoord);\n"
+    "    if (texColor.rgb == vec3(0.0)) {\n"
+    "        texColor.a = 0.0;\n"
+    "    }\n"
+    "    gl_FragColor = texColor;\n"
+    "}\n";
+
+//by vadim
+const char* vertexShaderColor =
+    "attribute vec4 a_Position;\n"
+    "void main() {\n"
+    "    gl_Position = a_Position;\n"
+    "}\n";
+
+const char* fragmentShaderColor =
+    "precision mediump float;\n"
+    "uniform vec4 u_Color;\n"
+    "void main() {\n"
+    "    gl_FragColor = u_Color;\n"
+    "}\n";
+
 
 void Init(struct android_app* app)
 {
@@ -102,8 +143,13 @@ void Init(struct android_app* app)
     CreateAudioEngine();
 
     // Create shader program
-    program = createProgram(vertexShaderSource, fragmentShaderSource);
-    glUseProgram(program);
+    textureProgram = createProgram(vertexShaderTexture, fragmentShaderTexture);
+    //glUseProgram(textureProgram);
+
+    colorProgram = createProgram(vertexShaderColor, fragmentShaderColor);
+    gPositionHandle = glGetAttribLocation(colorProgram, "a_Position");
+    gColorHandle = glGetUniformLocation(colorProgram, "u_Color");
+
 
     Log("FlappyBird is loaded!");
 
@@ -150,7 +196,8 @@ void Shutdown()
     ANativeWindow_release(g_App->window);
 
     ShutdownGame();
-    glDeleteProgram(program);
+    glDeleteProgram(textureProgram);
+    glDeleteProgram(colorProgram);
 
     g_Initialized = false;
 }

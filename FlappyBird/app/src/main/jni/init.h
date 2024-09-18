@@ -9,8 +9,13 @@ extern bool g_Initialized;
 extern struct android_app* g_App;
 extern int32_t WindowSizeX;
 extern int32_t WindowSizeY;
-extern GLuint program;
-extern GLuint texture;
+
+extern GLuint textureProgram;
+
+extern GLuint colorProgram;
+extern GLuint gPositionHandle;
+extern GLuint gColorHandle;
+
 
 void Init(struct android_app* app);
 void MainLoopStep();

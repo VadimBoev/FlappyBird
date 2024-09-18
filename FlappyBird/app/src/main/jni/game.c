@@ -121,6 +121,8 @@ bool InitGame()
     return true;
 }
 
+float angle;
+uint64_t timeAngle;
 void Render()
 {
 	//RenderTexture(t_pause, 200, 200, 100, 100);
@@ -162,12 +164,19 @@ void Render()
         offsetBase = 0;
     }
 
-    if (!IsGameStarted)
+    if (!blackscreen)
     {
         //logo
         RenderTexture(t_logo, 100, 500, 600, 125);
-        RenderTexture(t_yellowbird_downflap, 800, 500, 120, 100);
+        //RenderTexture(t_yellowbird_downflap, 800, 500, 120, 100);
 
+        if (getTickCount() - timeAngle > 10)
+        {
+            angle += 1.0f;
+            if (angle >= 360) angle = 0;
+            timeAngle = getTickCount();
+        }
+        RenderTexturePro(t_yellowbird_downflap, 800, 550, 100, 75, angle);
 
         //button START
         if (Button(t_start, 150, 1600, 280, 110))
@@ -182,10 +191,9 @@ void Render()
 
         }
     }
-
-    if (blackscreen)
+    else
     {
-        //...
+        CreateBox(0xFFFFFFFF, 300, 300, 200, 200);
     }
 
 }
