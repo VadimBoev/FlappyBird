@@ -6,6 +6,7 @@
 #include "audio.h"
 #include "init.h"
 #include "mouse.h"
+#include <stdlib.h>
 
 //buttons
 GLuint t_pause;
@@ -56,7 +57,6 @@ GLuint t_yellowbird_downflap;
 GLuint t_yellowbird_midflap;
 GLuint t_yellowbird_upflap;
 
-
 // data
 uint64_t cycleTime;
 bool IsDead = false;
@@ -72,11 +72,33 @@ enum GameState {
     FADE_IN,
     FADE_OUT,
     READY_GAME,
-    GO_GAME
+    GO_GAME,
+    STOP_GAME
 };
 
 enum GameState currentState = IDLE;
 
+typedef struct {
+    float x, y;
+    float velocity;
+    float angle;
+    GLuint currentTexture;
+    int frame;
+    uint64_t lastFrameTime;
+} Bird;
+
+typedef struct {
+    float x, y;
+    float width, height;
+} Pipe;
+
+Bird bird;
+Pipe pipes[2];
+
+float Scale(float percent, bool isWidth) 
+{
+    return (percent / 100.0f) * (isWidth ? WindowSizeX : WindowSizeY);
+}
 
 bool InitGame()
 {
@@ -129,64 +151,177 @@ bool InitGame()
     t_yellowbird_midflap = LoadTexture("sprites/yellowbird-midflap.png");
     t_yellowbird_upflap = LoadTexture("sprites/yellowbird-upflap.png");
 
+    bird.x = Scale(18.52, true);
+    bird.y = Scale(29.17, false);
+    bird.velocity = 0.0f;
+    bird.angle = 0.0f;
+    bird.currentTexture = t_yellowbird_midflap;
+    bird.frame = 0;
+    bird.lastFrameTime = 0;
+
+    pipes[0].x = Scale(100, true);
+    pipes[0].y = 0;
+    pipes[0].width = Scale(9.26, true);
+    pipes[0].height = Scale(20.83, false);
+
+    pipes[1].x = Scale(100, true) + Scale(27.78, true);
+    pipes[1].y = 0;
+    pipes[1].width = Scale(9.26, true);
+    pipes[1].height = Scale(20.83, false);
 
     return true;
+}
+
+void AnimateBird()
+{
+    uint64_t currentTime = getTickCount();
+    if (currentTime - bird.lastFrameTime > 100)
+    {
+        bird.lastFrameTime = currentTime;
+        bird.frame = (bird.frame + 1) % 3;
+        switch (bird.frame) {
+        case 0: bird.currentTexture = t_yellowbird_downflap; break;
+        case 1: bird.currentTexture = t_yellowbird_midflap; break;
+        case 2: bird.currentTexture = t_yellowbird_upflap; break;
+        }
+    }
+}
+
+void ApplyGravity()
+{
+    bird.velocity += 0.5f;
+    bird.y += bird.velocity;
+    bird.angle += 2.0f;
+    if (bird.angle > 90.0f) bird.angle = 90.0f;
+}
+
+void Jump()
+{
+    bird.velocity = -10.0f;
+    bird.angle = -30.0f;
+}
+
+bool CheckCollision()
+{
+    // detect collision with pipe's
+    for (int i = 0; i < 2; i++) 
+    {
+        if (bird.x < pipes[i].x + pipes[i].width &&
+            bird.x + Scale(11.11, true) > pipes[i].x &&
+            bird.y < pipes[i].y + pipes[i].height &&
+            bird.y + Scale(4.17, false) > pipes[i].y) {
+            return true;
+        }
+    }
+
+    // ground collision
+    float baseHeight = Scale(75, false);
+    if (bird.y + Scale(4.17, false) > baseHeight) 
+    {
+        return true;
+    }
+
+    return false;
+}
+
+void RenderBird()
+{
+    RenderTexturePro(bird.currentTexture, bird.x, bird.y, Scale(11.11, true), Scale(4.17, false), bird.angle);
+}
+
+void RenderPipes()
+{
+    for (int i = 0; i < 2; i++)
+    {
+        RenderTexture(t_pipe_green, pipes[i].x, pipes[i].y, pipes[i].width, pipes[i].height);
+    }
 }
 
 void Render()
 {
     //background
-    RenderTexture(t_background_day, 0, 0, WindowSizeX, WindowSizeY - 100);
-    
+    RenderTexture(t_background_day, 0, 0, Scale(100, true), Scale(95.83, false));
+
     //cycle base texture
-    if (getTickCount() - cycleTime > 5)
+    if (currentState != STOP_GAME)
     {
-        offsetBase -= gameSpeed;
-        cycleTime = getTickCount();
+        if (getTickCount() - cycleTime > 5)
+        {
+            offsetBase -= gameSpeed;
+            cycleTime = getTickCount();
+        }
     }
 
-    RenderTexture(t_base, offsetBase, WindowSizeY - 600, WindowSizeX, 600);
+    RenderTexture(t_base, offsetBase, Scale(75, false), Scale(100, true), Scale(25, false));
 
     if (offsetBase < 0)
     {
-        RenderTexture(t_base, WindowSizeX + offsetBase, WindowSizeY - 600, WindowSizeX, 600);
+        RenderTexture(t_base, Scale(100, true) + offsetBase, Scale(75, false), Scale(100, true), Scale(25, false));
     }
 
-    if (offsetBase <= -WindowSizeX)
+    if (offsetBase <= -Scale(100, true))
     {
         offsetBase = 0;
     }
 
     if (currentState == IDLE || currentState == FADE_IN)
     {
-
-        RenderTexture(t_logo, 100, 500, 600, 125);
-        RenderTexture(t_yellowbird_downflap, 800, 500, 120, 100);
+        RenderTexture(t_logo, Scale(9.26, true), Scale(20.83, false), Scale(55.56, true), Scale(5.21, false));
+        RenderTexture(t_yellowbird_downflap, Scale(74.07, true), Scale(20.83, false), Scale(11.11, true), Scale(4.17, false));
 
         // button START
-        if (ButtonBump(t_start, 150, 1600, 280, 110))
+        if (ButtonBump(t_start, Scale(13.89, true), Scale(66.67, false), Scale(25.93, true), Scale(4.58, false)))
         {
             currentState = FADE_IN;
         }
 
         // button SCORE
-        if (ButtonBump(t_score, 650, 1600, 280, 110))
+        if (ButtonBump(t_score, Scale(60.19, true), Scale(66.67, false), Scale(25.93, true), Scale(4.58, false)))
         {
 
         }
     }
     else if (currentState == FADE_OUT || currentState == READY_GAME) //Ready?
     {
-        RenderTexture(t_message, 100, 200, WindowSizeX - 100 * 2, 1200);
-        if (Button(0, 0, WindowSizeX, WindowSizeY))
+        RenderTexture(t_message, Scale(9.26, true), Scale(8.33, false), Scale(82.41, true), Scale(50, false));
+        if (Button(0, 0, Scale(100, true), Scale(100, false)))
         {
             currentState = GO_GAME;
         }
     }
     else if (currentState == GO_GAME)
     {
+        ApplyGravity();
+        AnimateBird();
 
+        for (int i = 0; i < 2; i++)
+        {
+            pipes[i].x -= gameSpeed;
+            if (pipes[i].x < -Scale(9.26, true))
+            {
+                pipes[i].x = Scale(100, true);
+                pipes[i].y = rand() % (int)Scale(20.83, false);
+            }
+        }
+
+        if (CheckCollision())
+        {
+            currentState = STOP_GAME;
+        }
+
+        if (Button(0, 0, Scale(100, true), Scale(100, false))) {
+            Jump();
+        }
+
+        RenderBird();
+        RenderPipes();
     }
+    else if (currentState == STOP_GAME)
+    {
+        RenderTexture(t_gameover, Scale(9.26, true), Scale(20.83, false), Scale(55.56, true), Scale(5.21, false));
+    }
+
+
 
     if (currentState == FADE_IN)
     {
@@ -208,12 +343,11 @@ void Render()
     }
 
     // render black screen
-    if (currentState == FADE_IN || currentState == FADE_OUT) 
+    if (currentState == FADE_IN || currentState == FADE_OUT)
     {
         uint32_t color = 0x00000000 | (alpha << 24);
-        CreateBox(color, 0, 0, WindowSizeX, WindowSizeY);
+        CreateBox(color, 0, 0, Scale(100, true), Scale(100, false));
     }
-
 }
 
 bool ButtonBump(GLuint textureid, float posX, float posY, float width, float height)
@@ -228,7 +362,7 @@ bool ButtonBump(GLuint textureid, float posX, float posY, float width, float hei
         }
     }
 
-    if (released) { posY += 25; }
+    if (released) { posY += Scale(1.04, false); }
 
     RenderTexture(textureid, posX, posY, width, height);
 
@@ -250,8 +384,6 @@ bool Button(float posX, float posY, float width, float height)
     return released;
 }
 
-
-
 void ShutdownGame()
 {
     // Delete textures
@@ -263,7 +395,7 @@ void ShutdownGame()
     glDeleteTextures(1, &t_share);
     glDeleteTextures(1, &t_start);
     glDeleteTextures(1, &t_ok);
-    
+
     glDeleteTextures(1, &t_0);
     glDeleteTextures(1, &t_1);
     glDeleteTextures(1, &t_2);
@@ -302,5 +434,4 @@ void ShutdownGame()
     glDeleteTextures(1, &t_yellowbird_downflap);
     glDeleteTextures(1, &t_yellowbird_midflap);
     glDeleteTextures(1, &t_yellowbird_upflap);
-
 }
