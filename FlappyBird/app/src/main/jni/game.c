@@ -62,10 +62,9 @@ GLuint t_yellowbird_upflap;
 
 // data
 uint64_t cycleTime;
-bool IsDead = false;
 int offsetBase = 0;
 int gameSpeed = 10;
-bool IsGameStarted = false;
+int score = 0;
 
 int alpha = 0;
 bool fadeOut = false;
@@ -76,7 +75,10 @@ enum GameState {
     FADE_OUT,
     READY_GAME,
     GO_GAME,
-    STOP_GAME
+    STOP_GAME,
+    FADE_OUT_GAMEOVER,
+    FALL_BIRD,
+    FADE_IN_PANEL
 };
 
 enum GameState currentState = IDLE;
@@ -115,6 +117,10 @@ GLuint curTextureAnimBirdForLogo;
 
 GLuint birdTexturesForLogo[3];
 int currentFrameForLogo = 0;
+
+int fadeOutAlpha = 255;
+float panelY = 0;
+GLuint medalTexture = 0;
 
 int Random(int min, int max) 
 {
@@ -207,6 +213,8 @@ bool InitGame()
     birdTexturesForLogo[0] = t_yellowbird_downflap;
     birdTexturesForLogo[1] = t_yellowbird_midflap;
     birdTexturesForLogo[2] = t_yellowbird_upflap;
+
+    panelY = Scale(100, false);
 
     return true;
 }
@@ -339,13 +347,71 @@ void UpdateBirdTextureForLogo()
     }
 }
 
+void RenderScore(int score, float x, float y, float digitWidth, float digitHeight)
+{
+    char scoreStr[10];
+    sprintf(scoreStr, "%d", score);
+    int len = strlen(scoreStr);
+
+    for (int i = 0; i < len; i++)
+    {
+        int digit = scoreStr[i] - '0';
+        GLuint texture = 0;
+
+        switch (digit)
+        {
+        case 0: texture = t_0; break;
+        case 1: texture = t_1; break;
+        case 2: texture = t_2; break;
+        case 3: texture = t_3; break;
+        case 4: texture = t_4; break;
+        case 5: texture = t_5; break;
+        case 6: texture = t_6; break;
+        case 7: texture = t_7; break;
+        case 8: texture = t_8; break;
+        case 9: texture = t_9; break;
+        }
+
+        RenderTexture(texture, x + i * digitWidth, y, digitWidth, digitHeight);
+    }
+}
+
+void RenderSmallScore(int score, float x, float y, float digitWidth, float digitHeight)
+{
+    char scoreStr[10];
+    sprintf(scoreStr, "%d", score);
+    int len = strlen(scoreStr);
+
+    for (int i = 0; i < len; i++)
+    {
+        int digit = scoreStr[i] - '0';
+        GLuint texture = 0;
+
+        switch (digit)
+        {
+        case 0: texture = t_0_small; break;
+        case 1: texture = t_1_small; break;
+        case 2: texture = t_2_small; break;
+        case 3: texture = t_3_small; break;
+        case 4: texture = t_4_small; break;
+        case 5: texture = t_5_small; break;
+        case 6: texture = t_6_small; break;
+        case 7: texture = t_7_small; break;
+        case 8: texture = t_8_small; break;
+        case 9: texture = t_9_small; break;
+        }
+
+        RenderTexture(texture, x + i * digitWidth, y, digitWidth, digitHeight);
+    }
+}
+
 void Render()
 {
     //background
     RenderTexture(t_background_day, 0, 0, Scale(100, true), Scale(95.83, false));
 
     //cycle base texture
-    if (currentState != STOP_GAME)
+    if (currentState != STOP_GAME && currentState != FADE_OUT_GAMEOVER && currentState != FALL_BIRD && currentState != FADE_IN_PANEL)
     {
         if (getTickCount() - cycleTime > 5)
         {
@@ -399,7 +465,7 @@ void Render()
     }
     else if (currentState == FADE_OUT || currentState == READY_GAME) //Ready?
     {
-        RenderTexture(t_message, Scale(9.26, true), Scale(8.33, false), Scale(82.41, true), Scale(50, false));
+        RenderTexture(t_message, Scale(10, true), Scale(9, false), Scale(80, true), Scale(50, false));
         if (Button(0, 0, Scale(100, true), Scale(100, false)))
         {
             currentState = GO_GAME;
@@ -422,6 +488,7 @@ void Render()
             if (bird.x + (bird.width / 2) >= pipes[i].x + pipes[i].w &&
                 bird.x + (bird.width / 2) <= pipes[i].x + pipes[i].w + gameSpeed)
             {
+                score++;
                 PlayAudio("audio/point.mp3");
             }
         }
@@ -431,18 +498,114 @@ void Render()
             currentState = STOP_GAME;
         }
 
-        if (Button(0, 0, Scale(100, true), Scale(100, false))) 
+        if (Button(0, 0, Scale(100, true), Scale(100, false)))
         {
             Jump();
             PlayAudio("audio/wing.mp3");
         }
 
-        RenderBird();
         RenderPipes();
+        RenderBird();
+
+        if (score > 0)
+            RenderScore(score, Scale(45, true), Scale(7, false), Scale(8, true), Scale(5, false));
     }
     else if (currentState == STOP_GAME)
     {
-        RenderTexture(t_gameover, Scale(9.26, true), Scale(20.83, false), Scale(55.56, true), Scale(5.21, false));
+        currentState = FADE_OUT_GAMEOVER;
+    }
+    else if (currentState == FADE_OUT_GAMEOVER)
+    {
+        fadeOutAlpha -= 5;
+        if (fadeOutAlpha <= 0)
+        {
+            fadeOutAlpha = 0;
+            currentState = FALL_BIRD;
+        }
+
+        RenderPipes();
+        RenderBird();
+
+        uint32_t color = 0x00FFFFFF | (fadeOutAlpha << 24);
+        CreateBox(color, 0, 0, Scale(100, true), Scale(100, false));
+    }
+    else if (currentState == FALL_BIRD)
+    {
+        ApplyGravity();
+        RenderPipes();
+        RenderBird();
+
+        if (bird.y + bird.height >= Scale(75, false))
+        {
+            bird.y = Scale(75, false) - bird.height;
+            currentState = FADE_IN_PANEL;
+        }
+    }
+    else if (currentState == FADE_IN_PANEL)
+    {
+        RenderPipes();
+        RenderBird();
+
+        panelY = MoveTowards(panelY, Scale(30, false), 20.0f);
+        RenderTexture(t_panel, Scale(15, true), panelY, Scale(70, true), Scale(17.5, false));
+
+        // Render score
+        RenderSmallScore(score, Scale(70, true), panelY + Scale(5, false), Scale(4, true), Scale(3, false));
+
+        RenderTexture(t_gameover, Scale(17.5, true), Scale(18, false), Scale(65, true), Scale(6, false));
+
+        // Render medal
+        if (score >= 40) medalTexture = t_platinum_medal;
+        else if (score >= 30) medalTexture = t_gold_medal;
+        else if (score >= 20) medalTexture = t_silver_medal;
+        else if (score >= 10) medalTexture = t_bronze_medal;
+        else medalTexture = 0;
+
+        if (medalTexture)
+        {
+            RenderTexture(medalTexture, Scale(22, true), panelY + Scale(6, false), Scale(15, true), Scale(7, false));
+        }
+
+        // button OK
+        if (ButtonBump(t_ok, Scale(13.89, true), Scale(66.67, false), Scale(25.93, true), Scale(4.58, false)))
+        {
+            //Reset
+            currentState = IDLE;
+            score = 0;
+
+            bird.x = Scale(18.52, true);
+            bird.y = Scale(29.17, false);
+            bird.velocity = 0.0f;
+            bird.angle = 0.0f;
+            bird.width = Scale(11.11, true);
+            bird.height = Scale(4.17, false);
+            bird.currentTexture = t_yellowbird_midflap;
+            bird.frame = 0;
+            bird.lastFrameTime = 0;
+
+
+            pipes[0].x = Scale(100, true);
+            pipes[0].y = Scale(37.5, false);
+            pipes[0].w = Scale(15, true);
+            pipes[0].h = Scale(37.5, false);
+            pipes[0].offset = Random(Scale(-11, false), Scale(11, false));
+
+            pipes[1].x = Scale(100, true) + Scale(60, true);
+            pipes[1].y = Scale(37.5, false);
+            pipes[1].w = Scale(15, true);
+            pipes[1].h = Scale(37.5, false);
+            pipes[1].offset = Random(Scale(-11, false), Scale(11, false));
+
+            panelY = Scale(100, false);
+
+
+        }
+
+        // button SHARE
+        if (ButtonBump(t_share, Scale(60.19, true), Scale(66.67, false), Scale(25.93, true), Scale(4.58, false)))
+        {
+
+        }
     }
 
     if (currentState == FADE_IN)
@@ -470,7 +633,6 @@ void Render()
         uint32_t color = 0x00000000 | (alpha << 24);
         CreateBox(color, 0, 0, Scale(100, true), Scale(100, false));
     }
-
 }
 
 bool ButtonBump(GLuint textureid, float posX, float posY, float width, float height)
