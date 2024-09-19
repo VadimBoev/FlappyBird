@@ -502,6 +502,7 @@ void Render()
         if (CheckCollision())
         {
             currentState = STOP_GAME;
+            PlayAudio("audio/hit.mp3");
         }
 
         if (Button(0, 0, Scale(100, true), Scale(100, false)))
@@ -532,6 +533,7 @@ void Render()
         {
             fadeOutAlpha = 0;
             currentState = FALL_BIRD;
+            PlayAudio("audio/die.mp3");
         }
 
         RenderPipes();
