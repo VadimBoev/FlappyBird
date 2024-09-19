@@ -6,6 +6,7 @@
 #include "audio.h"
 #include "init.h"
 #include "mouse.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 
@@ -219,6 +220,21 @@ bool InitGame()
     panelY = Scale(100, false);
 
     newBestScore = false;
+
+
+    //load best score
+    char filePath[256];
+    snprintf(filePath, sizeof(filePath), "%s/save.txt", g_App->activity->internalDataPath);
+
+    FILE* file = fopen(filePath, "r");
+    if (file != NULL) 
+    {
+        int loadbestscore;
+        fscanf(file, "%d", &loadbestscore);
+        fclose(file);
+
+        bestScore = loadbestscore;
+    }
 
     return true;
 }
@@ -523,6 +539,16 @@ void Render()
         {
             bestScore = score;
             newBestScore = true;
+
+            char filePath[256];
+            snprintf(filePath, sizeof(filePath), "%s/save.txt", g_App->activity->internalDataPath);
+
+            FILE* file = fopen(filePath, "w");
+            if (file != NULL) 
+            {
+                fprintf(file, "%d", bestScore);
+                fclose(file);
+            }
         }
         currentState = FADE_OUT_GAMEOVER;
     }
