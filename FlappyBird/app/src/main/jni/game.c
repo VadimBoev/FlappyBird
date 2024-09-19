@@ -9,6 +9,8 @@
 #include <stdlib.h>
 #include <math.h>
 
+#define SIZE_SPACE_PIPE 3.3f
+
 //buttons
 GLuint t_pause;
 GLuint t_ok;
@@ -253,16 +255,52 @@ void Jump()
 
 bool CheckCollision()
 {
-    // detect collision with pipe's
-    //for (int i = 0; i < 2; i++)
-    //{
-    //    if (bird.x < pipes[i].x + pipes[i].width &&
-    //        bird.x + Scale(11.11, true) > pipes[i].x &&
-    //        (bird.y < pipes[i].topY + pipes[i].height ||
-    //            bird.y + Scale(4.17, false) > pipes[i].bottomY)) {
-    //        return true;
-    //    }
-    //}
+    // detect collision with pipes
+    for (int i = 0; i < 2; i++)
+    {
+        // upper pipe
+        float topPipeX = pipes[i].x;
+        float topPipeY = pipes[i].y + pipes[i].offset - (bird.height * SIZE_SPACE_PIPE);
+        float topPipeWidth = pipes[i].w;
+        float topPipeHeight = -(pipes[i].h + pipes[i].offset - (bird.height * SIZE_SPACE_PIPE));
+
+        // lower pipe
+        float bottomPipeX = pipes[i].x;
+        float bottomPipeY = pipes[i].y + pipes[i].offset;
+        float bottomPipeWidth = pipes[i].w;
+        float bottomPipeHeight = pipes[i].h - pipes[i].offset;
+
+        // checking collision for upper pipe
+        if (bird.x < topPipeX + topPipeWidth &&
+            bird.x + bird.width > topPipeX &&
+            bird.y < topPipeY &&
+            bird.y + bird.height > topPipeY + topPipeHeight)
+        {
+            return true;
+        }
+
+        // checking collision for lower pipe
+        if (bird.x < bottomPipeX + bottomPipeWidth &&
+            bird.x + bird.width > bottomPipeX &&
+            bird.y < bottomPipeY + bottomPipeHeight &&
+            bird.y + bird.height > bottomPipeY)
+        {
+            return true;
+        }
+
+        // checking space between pipes
+        float gapStartY = topPipeY + topPipeHeight;
+        float gapEndY = bottomPipeY;
+
+        if (bird.x < bottomPipeX + bottomPipeWidth &&
+            bird.x + bird.width > bottomPipeX &&
+            bird.y + bird.height > gapStartY &&
+            bird.y < gapEndY)
+        {
+            // collision not detect for bird
+            continue;
+        }
+    }
 
     // ground collision
     float baseHeight = Scale(75, false);
@@ -283,7 +321,9 @@ void RenderPipes()
 {
     for (int i = 0; i < 2; i++)
     {
-        RenderTexture(t_pipe_green, pipes[i].x, pipes[i].y + pipes[i].offset - (bird.height * 3.3f), pipes[i].w, -(pipes[i].h + pipes[i].offset - (bird.height * 3.3f)));
+        RenderTexture(t_pipe_green, pipes[i].x, pipes[i].y + pipes[i].offset - (bird.height * SIZE_SPACE_PIPE), 
+            pipes[i].w, -(pipes[i].h + pipes[i].offset - (bird.height * SIZE_SPACE_PIPE)));
+
         RenderTexture(t_pipe_green, pipes[i].x, pipes[i].y + pipes[i].offset, pipes[i].w, pipes[i].h - pipes[i].offset);
     }
 }
@@ -430,6 +470,7 @@ void Render()
         uint32_t color = 0x00000000 | (alpha << 24);
         CreateBox(color, 0, 0, Scale(100, true), Scale(100, false));
     }
+
 }
 
 bool ButtonBump(GLuint textureid, float posX, float posY, float width, float height)
@@ -444,7 +485,7 @@ bool ButtonBump(GLuint textureid, float posX, float posY, float width, float hei
         }
     }
 
-    if (released) { posY += Scale(1.04, false); }
+    if (released) { posY += Scale(1, false); }
 
     RenderTexture(textureid, posX, posY, width, height);
 
