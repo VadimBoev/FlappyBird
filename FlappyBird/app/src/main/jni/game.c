@@ -65,6 +65,8 @@ uint64_t cycleTime;
 int offsetBase = 0;
 int gameSpeed = 10;
 int score = 0;
+int bestScore = 0;
+bool newBestScore = false;
 
 int alpha = 0;
 bool fadeOut = false;
@@ -179,7 +181,7 @@ bool InitGame()
     t_yellowbird_upflap = LoadTexture("sprites/yellowbird-upflap.png");
 
     bird.x = Scale(18.52, true);
-    bird.y = Scale(29.17, false);
+    bird.y = Scale(20, false);
     bird.velocity = 0.0f;
     bird.angle = 0.0f;
     bird.width = Scale(11.11, true);
@@ -215,6 +217,8 @@ bool InitGame()
     birdTexturesForLogo[2] = t_yellowbird_upflap;
 
     panelY = Scale(100, false);
+
+    newBestScore = false;
 
     return true;
 }
@@ -465,6 +469,8 @@ void Render()
     }
     else if (currentState == FADE_OUT || currentState == READY_GAME) //Ready?
     {
+        RenderBird();
+
         RenderTexture(t_message, Scale(10, true), Scale(9, false), Scale(80, true), Scale(50, false));
         if (Button(0, 0, Scale(100, true), Scale(100, false)))
         {
@@ -512,6 +518,11 @@ void Render()
     }
     else if (currentState == STOP_GAME)
     {
+        if (score > bestScore)
+        {
+            bestScore = score;
+            newBestScore = true;
+        }
         currentState = FADE_OUT_GAMEOVER;
     }
     else if (currentState == FADE_OUT_GAMEOVER)
@@ -549,8 +560,17 @@ void Render()
         panelY = MoveTowards(panelY, Scale(30, false), 20.0f);
         RenderTexture(t_panel, Scale(15, true), panelY, Scale(70, true), Scale(17.5, false));
 
-        // Render score
+        // Render default score
         RenderSmallScore(score, Scale(70, true), panelY + Scale(5, false), Scale(4, true), Scale(3, false));
+
+        // Render best score
+        RenderSmallScore(bestScore, Scale(70, true), panelY + Scale(11.5, false), Scale(4, true), Scale(3, false));
+
+        if (newBestScore)
+        {
+            RenderTexture(t_new, Scale(56, true), panelY + Scale(9, false), Scale(10, true), Scale(1.8, false));
+        }
+
 
         RenderTexture(t_gameover, Scale(17.5, true), Scale(18, false), Scale(65, true), Scale(6, false));
 
@@ -574,7 +594,7 @@ void Render()
             score = 0;
 
             bird.x = Scale(18.52, true);
-            bird.y = Scale(29.17, false);
+            bird.y = Scale(20, false);
             bird.velocity = 0.0f;
             bird.angle = 0.0f;
             bird.width = Scale(11.11, true);
@@ -598,7 +618,9 @@ void Render()
 
             panelY = Scale(100, false);
 
+            fadeOutAlpha = 255;
 
+            newBestScore = false;
         }
 
         // button SHARE
