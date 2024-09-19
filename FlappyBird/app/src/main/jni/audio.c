@@ -61,6 +61,8 @@ void CreateAudioEngine()
 
 void PlayAudio(const char* assetPath)
 {
+    return;
+
     SLresult result;
 
     if (engineObject == NULL || engineEngine == NULL || outputMixObject == NULL)

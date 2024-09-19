@@ -7,6 +7,7 @@
 #include "init.h"
 #include "mouse.h"
 #include <stdlib.h>
+#include <math.h>
 
 //buttons
 GLuint t_pause;
@@ -82,6 +83,8 @@ typedef struct {
     float x, y;
     float velocity;
     float angle;
+    float width;
+    float height;
     GLuint currentTexture;
     int frame;
     uint64_t lastFrameTime;
@@ -89,15 +92,31 @@ typedef struct {
 
 typedef struct {
     float x, y;
-    float width, height;
+    float w, h;
+    float offset;
 } Pipe;
 
 Bird bird;
 Pipe pipes[2];
 
-float Scale(float percent, bool isWidth) 
+float Scale(float percent, bool isWidth)
 {
     return (percent / 100.0f) * (isWidth ? WindowSizeX : WindowSizeY);
+}
+
+float logoY;
+float birdY;
+float logoVelocity;
+float birdVelocity;
+uint64_t timeAnimBirdForLogo;
+GLuint curTextureAnimBirdForLogo;
+
+GLuint birdTexturesForLogo[3];
+int currentFrameForLogo = 0;
+
+int Random(int min, int max) 
+{
+    return min + rand() / (RAND_MAX / (max - min + 1) + 1);
 }
 
 bool InitGame()
@@ -155,21 +174,48 @@ bool InitGame()
     bird.y = Scale(29.17, false);
     bird.velocity = 0.0f;
     bird.angle = 0.0f;
+    bird.width = Scale(11.11, true);
+    bird.height = Scale(4.17, false);
     bird.currentTexture = t_yellowbird_midflap;
     bird.frame = 0;
     bird.lastFrameTime = 0;
 
-    pipes[0].x = Scale(100, true);
-    pipes[0].y = 0;
-    pipes[0].width = Scale(9.26, true);
-    pipes[0].height = Scale(20.83, false);
 
-    pipes[1].x = Scale(100, true) + Scale(27.78, true);
-    pipes[1].y = 0;
-    pipes[1].width = Scale(9.26, true);
-    pipes[1].height = Scale(20.83, false);
+    pipes[0].x = Scale(100, true);
+    pipes[0].y = Scale(37.5, false);
+    pipes[0].w = Scale(15, true);
+    pipes[0].h = Scale(37.5, false);
+    pipes[0].offset = Random(Scale(-11, false), Scale(11, false));
+
+    pipes[1].x = Scale(100, true) + Scale(60, true);
+    pipes[1].y = Scale(37.5, false);
+    pipes[1].w = Scale(15, true);
+    pipes[1].h = Scale(37.5, false);
+    pipes[1].offset = Random(Scale(-11, false), Scale(11, false));
+
+
+    logoY = Scale(20.83, false);
+    birdY = Scale(20.83, false);
+    logoVelocity = 1.1f;
+    birdVelocity = 1.1f;
+
+    timeAnimBirdForLogo = getTickCount();
+    curTextureAnimBirdForLogo = t_yellowbird_midflap;
+
+    birdTexturesForLogo[0] = t_yellowbird_downflap;
+    birdTexturesForLogo[1] = t_yellowbird_midflap;
+    birdTexturesForLogo[2] = t_yellowbird_upflap;
 
     return true;
+}
+
+float MoveTowards(float current, float target, float maxDelta) 
+{
+    if (fabs(target - current) <= maxDelta) 
+    {
+        return target;
+    }
+    return current + (target > current ? maxDelta : -maxDelta);
 }
 
 void AnimateBird()
@@ -179,7 +225,8 @@ void AnimateBird()
     {
         bird.lastFrameTime = currentTime;
         bird.frame = (bird.frame + 1) % 3;
-        switch (bird.frame) {
+        switch (bird.frame) 
+        {
         case 0: bird.currentTexture = t_yellowbird_downflap; break;
         case 1: bird.currentTexture = t_yellowbird_midflap; break;
         case 2: bird.currentTexture = t_yellowbird_upflap; break;
@@ -187,36 +234,39 @@ void AnimateBird()
     }
 }
 
-void ApplyGravity()
+void ApplyGravity() 
 {
-    bird.velocity += 0.5f;
+    bird.velocity += 0.65f;
     bird.y += bird.velocity;
-    bird.angle += 2.0f;
+
+    float targetAngle = bird.velocity > 0 ? 90.0f : -30.0f;
+    bird.angle = MoveTowards(bird.angle, targetAngle, 2.0f);
+
     if (bird.angle > 90.0f) bird.angle = 90.0f;
 }
 
 void Jump()
 {
-    bird.velocity = -10.0f;
+    bird.velocity = -13.5f;
     bird.angle = -30.0f;
 }
 
 bool CheckCollision()
 {
     // detect collision with pipe's
-    for (int i = 0; i < 2; i++) 
-    {
-        if (bird.x < pipes[i].x + pipes[i].width &&
-            bird.x + Scale(11.11, true) > pipes[i].x &&
-            bird.y < pipes[i].y + pipes[i].height &&
-            bird.y + Scale(4.17, false) > pipes[i].y) {
-            return true;
-        }
-    }
+    //for (int i = 0; i < 2; i++)
+    //{
+    //    if (bird.x < pipes[i].x + pipes[i].width &&
+    //        bird.x + Scale(11.11, true) > pipes[i].x &&
+    //        (bird.y < pipes[i].topY + pipes[i].height ||
+    //            bird.y + Scale(4.17, false) > pipes[i].bottomY)) {
+    //        return true;
+    //    }
+    //}
 
     // ground collision
     float baseHeight = Scale(75, false);
-    if (bird.y + Scale(4.17, false) > baseHeight) 
+    if (bird.y + bird.width > baseHeight)
     {
         return true;
     }
@@ -226,14 +276,26 @@ bool CheckCollision()
 
 void RenderBird()
 {
-    RenderTexturePro(bird.currentTexture, bird.x, bird.y, Scale(11.11, true), Scale(4.17, false), bird.angle);
+    RenderTexturePro(bird.currentTexture, bird.x, bird.y, bird.width, bird.height, bird.angle);
 }
 
 void RenderPipes()
 {
     for (int i = 0; i < 2; i++)
     {
-        RenderTexture(t_pipe_green, pipes[i].x, pipes[i].y, pipes[i].width, pipes[i].height);
+        RenderTexture(t_pipe_green, pipes[i].x, pipes[i].y + pipes[i].offset - (bird.height * 3.3f), pipes[i].w, -(pipes[i].h + pipes[i].offset - (bird.height * 3.3f)));
+        RenderTexture(t_pipe_green, pipes[i].x, pipes[i].y + pipes[i].offset, pipes[i].w, pipes[i].h - pipes[i].offset);
+    }
+}
+
+void UpdateBirdTextureForLogo()
+{
+    uint64_t currentTime = getTickCount();
+    if (currentTime - timeAnimBirdForLogo > 100) 
+    {
+        timeAnimBirdForLogo = currentTime;
+        currentFrameForLogo = (currentFrameForLogo + 1) % 3;
+        curTextureAnimBirdForLogo = birdTexturesForLogo[currentFrameForLogo];
     }
 }
 
@@ -264,10 +326,24 @@ void Render()
         offsetBase = 0;
     }
 
+    logoY += logoVelocity;
+    birdY += birdVelocity;
+
+    if (logoY > Scale(20.83, false) + 25 || logoY < Scale(20.83, false) - 25) {
+        logoVelocity = -logoVelocity;
+    }
+
+    if (birdY > Scale(20.83, false) + 25 || birdY < Scale(20.83, false) - 25) {
+        birdVelocity = -birdVelocity;
+    }
+
     if (currentState == IDLE || currentState == FADE_IN)
     {
-        RenderTexture(t_logo, Scale(9.26, true), Scale(20.83, false), Scale(55.56, true), Scale(5.21, false));
-        RenderTexture(t_yellowbird_downflap, Scale(74.07, true), Scale(20.83, false), Scale(11.11, true), Scale(4.17, false));
+        RenderTexture(t_logo, Scale(15, true), logoY, Scale(55.56, true), Scale(5.21, false));
+
+        UpdateBirdTextureForLogo();
+
+        RenderTexture(curTextureAnimBirdForLogo, Scale(75, true), birdY, bird.width, bird.height);
 
         // button START
         if (ButtonBump(t_start, Scale(13.89, true), Scale(66.67, false), Scale(25.93, true), Scale(4.58, false)))
@@ -297,10 +373,16 @@ void Render()
         for (int i = 0; i < 2; i++)
         {
             pipes[i].x -= gameSpeed;
-            if (pipes[i].x < -Scale(9.26, true))
+            if (pipes[i].x < -Scale(15, true))
             {
-                pipes[i].x = Scale(100, true);
-                pipes[i].y = rand() % (int)Scale(20.83, false);
+                pipes[i].x = Scale(115, true);
+                pipes[i].offset = Random(Scale(-11, false), Scale(11, false));
+            }
+
+            if (bird.x + (bird.width / 2) >= pipes[i].x + pipes[i].w &&
+                bird.x + (bird.width / 2) <= pipes[i].x + pipes[i].w + gameSpeed)
+            {
+                PlayAudio("audio/point.mp3");
             }
         }
 
@@ -309,8 +391,10 @@ void Render()
             currentState = STOP_GAME;
         }
 
-        if (Button(0, 0, Scale(100, true), Scale(100, false))) {
+        if (Button(0, 0, Scale(100, true), Scale(100, false))) 
+        {
             Jump();
+            PlayAudio("audio/wing.mp3");
         }
 
         RenderBird();
@@ -320,8 +404,6 @@ void Render()
     {
         RenderTexture(t_gameover, Scale(9.26, true), Scale(20.83, false), Scale(55.56, true), Scale(5.21, false));
     }
-
-
 
     if (currentState == FADE_IN)
     {
