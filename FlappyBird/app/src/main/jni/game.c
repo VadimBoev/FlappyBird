@@ -515,7 +515,7 @@ void Render()
             if (pipes[i].x < -ScaleX(15))
             {
                 pipes[i].x = ScaleX(115);
-                pipes[i].offset = Random(ScaleY(-11), ScaleY(11));
+                pipes[i].offset = Random(ScaleY(-8), ScaleY(8));
             }
 
             if (bird.x + (bird.width / 2) >= pipes[i].x + pipes[i].w &&

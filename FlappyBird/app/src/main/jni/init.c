@@ -144,7 +144,6 @@ void Init(struct android_app* app)
 
     // Create shader program
     textureProgram = createProgram(vertexShaderTexture, fragmentShaderTexture);
-    //glUseProgram(textureProgram);
 
     colorProgram = createProgram(vertexShaderColor, fragmentShaderColor);
     gPositionHandle = glGetAttribLocation(colorProgram, "a_Position");
