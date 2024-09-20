@@ -337,6 +337,12 @@ bool CheckCollision()
         return true;
     }
 
+    // sky collision
+    if (bird.y <= 0)
+    {
+        return true;
+    }
+
     return false;
 }
 
