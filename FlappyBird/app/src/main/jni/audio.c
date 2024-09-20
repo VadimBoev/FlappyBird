@@ -65,15 +65,6 @@ void PlayAudio(const char* assetPath)
 
     SLresult result;
 
-    if (engineObject == NULL || engineEngine == NULL || outputMixObject == NULL)
-    {
-        Log("Audio engine or output mix not initialized");
-        return;
-    }
-    
-    // free last player if he is exist
-    DestroyAudioPlayer();
-
     AAsset* audioAsset = AAssetManager_open(g_App->activity->assetManager, assetPath, AASSET_MODE_BUFFER);
     if (!audioAsset)
     {
@@ -107,6 +98,7 @@ void PlayAudio(const char* assetPath)
     if (result != SL_RESULT_SUCCESS)
     {
         Log("Failed to create audio player");
+        DestroyAudioPlayer();
         return;
     }
 
@@ -169,6 +161,19 @@ void ResumeAudio()
     }
 }
 
+void StopAudio()
+{
+    SLresult result;
+    if (playerPlay)
+    {
+        result = (*playerPlay)->SetPlayState(playerPlay, SL_PLAYSTATE_STOPPED);
+        if (result != SL_RESULT_SUCCESS)
+        {
+            Log("Failed to stop playing");
+        }
+    }
+}
+
 void DestroyAudioPlayer()
 {
     if (playerObject != NULL)
@@ -180,16 +185,18 @@ void DestroyAudioPlayer()
     }
 }
 
-void StopAudio()
+void DestroyAudioEngine()
 {
-    SLresult result;
-    if (playerPlay)
+    if (outputMixObject != NULL)
     {
-        result = (*playerPlay)->SetPlayState(playerPlay, SL_PLAYSTATE_STOPPED);
-        if (result != SL_RESULT_SUCCESS)
-        {
-            Log("Failed to stop playing");
-        }
-        DestroyAudioPlayer();
+        (*outputMixObject)->Destroy(outputMixObject);
+        outputMixObject = NULL;
+    }
+
+    if (engineObject != NULL)
+    {
+        (*engineObject)->Destroy(engineObject);
+        engineObject = NULL;
+        engineEngine = NULL;
     }
 }

@@ -521,7 +521,7 @@ void Render()
             PlayAudio("audio/hit.mp3");
         }
 
-        if (Button(0, 0, Scale(100, true), Scale(100, false)))
+        if (IsClick(0, 0, Scale(100, true), Scale(100, false)))
         {
             Jump();
             PlayAudio("audio/wing.mp3");
@@ -719,8 +719,26 @@ bool Button(float posX, float posY, float width, float height)
     return released;
 }
 
+bool IsClick(float posX, float posY, float width, float height)
+{
+    bool down = false;
+
+    if (mouse.isDown)
+    {
+        if (IsMouseInSquare(mouse.x, mouse.y, posX, posY, width, height))
+        {
+            down = true;
+        }
+    }
+
+    return down;
+}
+
 void ShutdownGame()
 {
+    DestroyAudioPlayer();
+    DestroyAudioEngine();
+
     // Delete textures
     glDeleteTextures(1, &t_pause);
     glDeleteTextures(1, &t_ok);

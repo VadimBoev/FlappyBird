@@ -7,5 +7,6 @@ void PauseAudio();
 void ResumeAudio();
 void StopAudio();
 void DestroyAudioPlayer();
+void DestroyAudioEngine();
 
 #endif // AUDIO_H
