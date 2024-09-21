@@ -201,13 +201,13 @@ bool InitGame()
     pipes[0].y = ScaleY(37.5);
     pipes[0].w = ScaleX(15);
     pipes[0].h = ScaleY(37.5);
-    pipes[0].offset = Random(ScaleY(-11), ScaleY(11));
+    pipes[0].offset = Random(ScaleY(-2), ScaleY(2));
 
     pipes[1].x = ScaleX(100) + ScaleX(60);
     pipes[1].y = ScaleY(37.5);
     pipes[1].w = ScaleX(15);
     pipes[1].h = ScaleY(37.5);
-    pipes[1].offset = Random(ScaleY(-11), ScaleY(11));
+    pipes[1].offset = Random(ScaleY(-2), ScaleY(2));
 
 
     logoY = ScaleY(20.83);
@@ -515,7 +515,7 @@ void Render()
             if (pipes[i].x < -ScaleX(15))
             {
                 pipes[i].x = ScaleX(115);
-                pipes[i].offset = Random(ScaleY(-8), ScaleY(8));
+                pipes[i].offset = Random(ScaleY(-4), ScaleY(4));
             }
 
             if (bird.x + (bird.width / 2) >= pipes[i].x + pipes[i].w &&
@@ -647,13 +647,13 @@ void Render()
             pipes[0].y = ScaleY(37.5);
             pipes[0].w = ScaleX(15);
             pipes[0].h = ScaleY(37.5);
-            pipes[0].offset = Random(ScaleY(-11), ScaleY(11));
+            pipes[0].offset = Random(ScaleY(-2), ScaleY(2));
 
             pipes[1].x = ScaleX(100) + ScaleX(60);
             pipes[1].y = ScaleY(37.5);
             pipes[1].w = ScaleX(15);
             pipes[1].h = ScaleY(37.5);
-            pipes[1].offset = Random(ScaleY(-11), ScaleY(11));
+            pipes[1].offset = Random(ScaleY(-2), ScaleY(2));
 
             panelY = ScaleY(100);
 
