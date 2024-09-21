@@ -40,9 +40,14 @@ In general, everything is simpler than it seems.
 OpenGL ES 2 + shaders for rendering, OpenSLES for sounds, upng for decoding png format and of course Android Native Activity.  
   
 ## Build:  
-```
-//todo
-```
+- Download [Visual Studio 2022](https://visualstudio.microsoft.com/)
+- - Open Visual Studio Installer
+- - Click "Edit"
+- - Check the following items: Development of classic applications in C++, Development of mobile applications in C++
+- Download Android Studio (we need apktool, sdk, ndk from it)
+- - Install NDK 25.2.9519653 (you can use the version above)
+- In the project, the setting is made for "Debug ARM", but make changes to build.bat (look at the paths)
+- Compile via CTRL + B
   
 ## Copyright: 
 I do not claim copyright. The right to this game and resources belongs to **DotGEARS**.
