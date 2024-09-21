@@ -37,8 +37,13 @@ Further, png images remain from the resources. There is no other way to use the 
 So I came across [upng](https://github.com/elanthis/upng), which completely solved the issue of decoding png files for their further rendering.
 
 In general, everything is simpler than it seems.  
-OpenGL ES 2 + shaders for rendering, OpenSLES for sounds, upng for decoding png format and of course Android Native Activity.
-
+OpenGL ES 2 + shaders for rendering, OpenSLES for sounds, upng for decoding png format and of course Android Native Activity.  
+  
+## Build:  
+```
+//todo
+```
+  
 ## Copyright: 
 I do not claim copyright. The right to this game and resources belongs to **DotGEARS**.
 
@@ -87,8 +92,13 @@ I do not claim copyright. The right to this game and resources belongs to **DotG
 Так я наткнулся на [upng](https://github.com/elanthis/upng), которая полностью решила вопрос с декодированием png файлов для дальнейшего их рендера.
 
 В целом всё проще чем кажется.  
-OpenGL ES 2 + шейдеры для отрисовки, OpenSLES для звуков, upng для декодирования png формата и конечно же Android Native Activity.
-
+OpenGL ES 2 + шейдеры для отрисовки, OpenSLES для звуков, upng для декодирования png формата и конечно же Android Native Activity.  
+  
+## Сборка:
+```
+//todo
+```
+  
 ## Авторское право: 
 Я не претендую на авторское право. Право на эту игру и ресурсы принадлежит **DotGEARS**.
 
