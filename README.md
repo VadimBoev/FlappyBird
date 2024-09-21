@@ -1,4 +1,4 @@
-<img src="flappy.gif" alt="game" width="25%">
+<img src="flappy.gif" alt="game" width="250px">
 
 **[Readme на русском языке](README_RU.md)**
 
