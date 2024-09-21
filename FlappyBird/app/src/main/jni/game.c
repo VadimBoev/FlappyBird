@@ -12,6 +12,8 @@
 
 #define SIZE_SPACE_PIPE 3.3f
 
+#define SPACE_BETWEEN_PIPES 5
+
 //buttons
 GLuint t_pause;
 GLuint t_ok;
@@ -201,13 +203,13 @@ bool InitGame()
     pipes[0].y = ScaleY(37.5);
     pipes[0].w = ScaleX(15);
     pipes[0].h = ScaleY(37.5);
-    pipes[0].offset = Random(ScaleY(-2), ScaleY(2));
+    pipes[0].offset = Random(ScaleY(-SPACE_BETWEEN_PIPES), ScaleY(SPACE_BETWEEN_PIPES));
 
     pipes[1].x = ScaleX(100) + ScaleX(60);
     pipes[1].y = ScaleY(37.5);
     pipes[1].w = ScaleX(15);
     pipes[1].h = ScaleY(37.5);
-    pipes[1].offset = Random(ScaleY(-2), ScaleY(2));
+    pipes[1].offset = Random(ScaleY(-SPACE_BETWEEN_PIPES), ScaleY(SPACE_BETWEEN_PIPES));
 
 
     logoY = ScaleY(20.83);
@@ -515,7 +517,7 @@ void Render()
             if (pipes[i].x < -ScaleX(15))
             {
                 pipes[i].x = ScaleX(115);
-                pipes[i].offset = Random(ScaleY(-4), ScaleY(4));
+                pipes[i].offset = Random(ScaleY(-SPACE_BETWEEN_PIPES), ScaleY(SPACE_BETWEEN_PIPES));
             }
 
             if (bird.x + (bird.width / 2) >= pipes[i].x + pipes[i].w &&
@@ -647,13 +649,13 @@ void Render()
             pipes[0].y = ScaleY(37.5);
             pipes[0].w = ScaleX(15);
             pipes[0].h = ScaleY(37.5);
-            pipes[0].offset = Random(ScaleY(-2), ScaleY(2));
+            pipes[0].offset = Random(ScaleY(-SPACE_BETWEEN_PIPES), ScaleY(SPACE_BETWEEN_PIPES));
 
             pipes[1].x = ScaleX(100) + ScaleX(60);
             pipes[1].y = ScaleY(37.5);
             pipes[1].w = ScaleX(15);
             pipes[1].h = ScaleY(37.5);
-            pipes[1].offset = Random(ScaleY(-2), ScaleY(2));
+            pipes[1].offset = Random(ScaleY(-SPACE_BETWEEN_PIPES), ScaleY(SPACE_BETWEEN_PIPES));
 
             panelY = ScaleY(100);
 
