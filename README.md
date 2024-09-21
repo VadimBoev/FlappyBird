@@ -1,3 +1,5 @@
+<img src="flappy.gif" alt="game" width="25%">
+
 **ENG:**
 
 # Flappy Bird, only C, without Java/Kotlin, weight APK (armeabi-v7a + arm64-v8a) < 100 kilobytes
