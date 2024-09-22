@@ -9,6 +9,11 @@
 #include "audio.h"
 #include "game.h"
 
+#include <time.h>
+
+struct timespec lastFrameTime;
+double deltaTime = 0.0f;
+
 bool                 g_Initialized = false;
 EGLDisplay           g_EglDisplay = EGL_NO_DISPLAY;
 EGLSurface           g_EglSurface = EGL_NO_SURFACE;
@@ -150,9 +155,20 @@ void Init(struct android_app* app)
     gColorHandle = glGetUniformLocation(colorProgram, "u_Color");
 
 
+    clock_gettime(CLOCK_MONOTONIC, &lastFrameTime);
+
     Log("FlappyBird is loaded!");
 
     g_Initialized = true;
+}
+
+void Update()
+{
+    struct timespec currentTime;
+    clock_gettime(CLOCK_MONOTONIC, &currentTime);
+
+    deltaTime = (currentTime.tv_sec - lastFrameTime.tv_sec) + (currentTime.tv_nsec - lastFrameTime.tv_nsec) / 1e9;
+    lastFrameTime = currentTime;
 }
 
 void MainLoopStep()
@@ -160,14 +176,36 @@ void MainLoopStep()
     if (g_EglDisplay == EGL_NO_DISPLAY)
         return;
 
+    static struct timespec lastFrameTime = { 0, 0 };
+    struct timespec currentFrameTime;
+    clock_gettime(CLOCK_MONOTONIC, &currentFrameTime);
+
+    if (lastFrameTime.tv_sec != 0 || lastFrameTime.tv_nsec != 0)
+    {
+        deltaTime = (currentFrameTime.tv_sec - lastFrameTime.tv_sec) +
+            (currentFrameTime.tv_nsec - lastFrameTime.tv_nsec) / 1e9;
+    }
+
     // Setup display size (every frame to accommodate for window resizing)
     glViewport(0, 0, (int)WindowSizeX, (int)WindowSizeY);
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
+    Update();
     Render();
 
     eglSwapBuffers(g_EglDisplay, g_EglSurface);
+
+    lastFrameTime = currentFrameTime;
+
+    double frameDuration = deltaTime;
+    if (frameDuration < 1.0 / 60.0)
+    {
+        struct timespec sleepTime;
+        sleepTime.tv_sec = 0;
+        sleepTime.tv_nsec = (1.0 / 60.0 - frameDuration) * 1e9;
+        nanosleep(&sleepTime, NULL);
+    }
 }
 
 void Shutdown()

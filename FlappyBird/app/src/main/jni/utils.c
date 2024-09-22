@@ -10,19 +10,9 @@ void Log(const char* fmt, ...)
     va_end(args);
 }
 
-//#if defined(__aarch64__)
-uint64_t getTickCount()
-//#else
-//uint32_t getTickCount()
-//#endif
+uint64_t getTickCount() 
 {
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-
-//#if defined(__aarch64__)
-    uint64_t time = (tv.tv_sec * 1000 + tv.tv_usec / 1000);
-//#else
- //   uint32_t time = (tv.tv_sec * 1000 + tv.tv_usec / 1000);
-//#endif 
-    return time;
+    struct timespec now;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    return (uint64_t)now.tv_sec * 1000 + (uint64_t)now.tv_nsec / 1000000;
 }

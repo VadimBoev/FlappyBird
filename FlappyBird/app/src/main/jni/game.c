@@ -64,9 +64,8 @@ GLuint t_yellowbird_midflap;
 GLuint t_yellowbird_upflap;
 
 // data
-uint64_t cycleTime;
 int offsetBase = 0;
-int gameSpeed = 10;
+int gameSpeed = 0;
 int score = 0;
 int bestScore = 0;
 bool newBestScore = false;
@@ -228,6 +227,8 @@ bool InitGame()
 
     newBestScore = false;
 
+    //game speed
+    gameSpeed = WindowSizeX / 135; // 1080 / 135 = 8
 
     //load best score
     char filePath[256];
@@ -446,11 +447,7 @@ void Render()
     //cycle base texture
     if (currentState != STOP_GAME && currentState != FADE_OUT_GAMEOVER && currentState != FALL_BIRD && currentState != FADE_IN_PANEL)
     {
-        if (getTickCount() - cycleTime > 5)
-        {
-            offsetBase -= gameSpeed;
-            cycleTime = getTickCount();
-        }
+        offsetBase -= gameSpeed;
     }
 
     RenderTexture(t_base, offsetBase, ScaleY(75), ScaleX(100), ScaleY(25));
