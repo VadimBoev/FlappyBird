@@ -1,6 +1,8 @@
 <img src="flappy.gif" alt="game" width="250px">
 
-**[Readme на русском языке](README_RU.md)**
+**[Readme на русском языке](README_RU.md)**  
+  
+[Dev blog in Telegram (ENG/RU)](https://t.me/boevdev)
 
 # Flappy Bird, only C, without Java/Kotlin, weight APK (armeabi-v7a + arm64-v8a) < 100 kilobytes
 
