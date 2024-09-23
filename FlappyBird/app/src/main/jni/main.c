@@ -59,6 +59,11 @@ void handle_input(struct android_app* app, AInputEvent* event)
     }
 }
 
+#define TARGET_FPS 60
+#define TARGET_FRAME_TIME (1.0f / TARGET_FPS)
+
+double g_Time = 0.0;
+float DeltaTime = 0.0f;
 
 void android_main(struct android_app* state)
 {
@@ -85,8 +90,31 @@ void android_main(struct android_app* state)
             }
         }
 
-        if (g_Initialized) 
+        if (g_Initialized)
         {
+            struct timespec current_timespec;
+            clock_gettime(CLOCK_MONOTONIC, &current_timespec);
+            double current_time = (double)(current_timespec.tv_sec) + (current_timespec.tv_nsec / 1000000000.0);
+            DeltaTime = g_Time > 0.0 ? (float)(current_time - g_Time) : (float)(1.0f / 60.0f);
+
+            // fps limit
+            if (DeltaTime < TARGET_FRAME_TIME) 
+            {
+                // calc time wait
+                double sleep_time = TARGET_FRAME_TIME - DeltaTime;
+                struct timespec sleep_spec;
+                sleep_spec.tv_sec = (time_t)sleep_time;
+                sleep_spec.tv_nsec = (long)((sleep_time - sleep_spec.tv_sec) * 1000000000.0);
+                nanosleep(&sleep_spec, NULL);
+
+                // update now time after wait
+                clock_gettime(CLOCK_MONOTONIC, &current_timespec);
+                current_time = (double)(current_timespec.tv_sec) + (current_timespec.tv_nsec / 1000000000.0);
+                DeltaTime = (float)(current_time - g_Time);
+            }
+
+            g_Time = current_time;
+
             MainLoopStep();
             MouseReset(&mouse);
         }
