@@ -481,16 +481,15 @@ void Render()
 
         RenderTexture(curTextureAnimBirdForLogo, ScaleX(75), birdY, bird.width, bird.height);
 
-        // button START
-        if (ButtonBump(t_start, ScaleX(13.89), ScaleY(66.67), ScaleX(25.93), ScaleY(4.58)))
+        if (ButtonBump(t_start, ScaleX(10), ScaleY(65), ScaleX(35), ScaleY(6)))
         {
             currentState = FADE_IN;
         }
-
+        
         // button SCORE
-        if (ButtonBump(t_score, ScaleX(60.19), ScaleY(66.67), ScaleX(25.93), ScaleY(4.58)))
+        if (ButtonBump(t_score, ScaleX(55), ScaleY(65), ScaleX(35), ScaleY(6)))
         {
-
+        
         }
     }
     else if (currentState == FADE_OUT || currentState == READY_GAME) //Ready?
@@ -625,7 +624,7 @@ void Render()
         }
 
         // button OK
-        if (ButtonBump(t_ok, ScaleX(13.89), ScaleY(66.67), ScaleX(25.93), ScaleY(4.58)))
+        if (ButtonBump(t_ok, ScaleX(10), ScaleY(65), ScaleX(35), ScaleY(6)))
         {
             //Reset
             currentState = IDLE;
@@ -662,7 +661,7 @@ void Render()
         }
 
         // button SHARE
-        if (ButtonBump(t_share, ScaleX(60.19), ScaleY(66.67), ScaleX(25.93), ScaleY(4.58)))
+        if (ButtonBump(t_share, ScaleX(55), ScaleY(65), ScaleX(35), ScaleY(6)))
         {
 
         }
