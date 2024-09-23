@@ -1,8 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools"
     package="com.flappybird.game"
 		  
-	android:versionCode="12"
-    android:versionName="1.2">
+	android:versionCode="13"
+    android:versionName="1.3">
 	
 	<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="30" />
 	
@@ -11,6 +11,7 @@
     <application android:label="FlappyBird" android:debuggable="true" android:hasCode="false" tools:replace="android:icon,android:theme,android:allowBackup,label" android:icon="@mipmap/icon">
         <activity android:name="android.app.NativeActivity"
                   android:label="FlappyBird"
+				  android:screenOrientation="portrait"
                   android:configChanges="orientation|keyboardHidden">
             <meta-data android:name="android.app.lib_name"
                        android:value="flappybird" />
