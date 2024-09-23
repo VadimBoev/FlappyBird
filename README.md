@@ -59,3 +59,6 @@ I do not claim copyright. The right to this game and resources belongs to **DotG
 - [Flapper](https://github.com/its-Lyn/Flapper)
 - [Raylib](https://github.com/raysan5/raylib)
 - [ImGui](https://github.com/ocornut/imgui/)
+
+## Star History
+[![Star History Chart](https://api.star-history.com/svg?repos=VadimBoev/FlappyBird&type=Timeline)](https://star-history.com/#VadimBoev/FlappyBird&Timeline)
