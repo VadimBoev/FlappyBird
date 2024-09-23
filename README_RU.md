@@ -53,3 +53,6 @@ OpenGL ES 2 + шейдеры для отрисовки, OpenSLES для звук
 - [Flapper](https://github.com/its-Lyn/Flapper)
 - [Raylib](https://github.com/raysan5/raylib)
 - [ImGui](https://github.com/ocornut/imgui/)
+
+## Star History
+[![Star History Chart](https://api.star-history.com/svg?repos=VadimBoev/FlappyBird&type=Timeline)](https://star-history.com/#VadimBoev/FlappyBird&Timeline)
