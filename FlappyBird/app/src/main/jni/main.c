@@ -20,7 +20,7 @@ static void handleAppCmd(struct android_app* app, int32_t cmd)
     }
 }
 
-void handle_input(struct android_app* app, AInputEvent* event) 
+int32_t handle_input(struct android_app* app, AInputEvent* event)
 {
     int32_t eventType = AInputEvent_getType(event);
 
@@ -56,7 +56,14 @@ void handle_input(struct android_app* app, AInputEvent* event)
         }
 
         MouseUpdate(&mouse, x, y, isDown, isReleased, isMoved);
+
+        return 1;
     }
+    //else if (eventType == AINPUT_EVENT_TYPE_KEY) //Apparently, this applies to physical keys, including volume control keys.
+    //{
+    //    return 0;
+    //}
+    return 0; //Return 0 if you are not processing the event
 }
 
 #define TARGET_FPS 60
