@@ -1,60 +1,52 @@
+Certainly! Here’s a refined version of your README that improves clarity and readability while maintaining the essential details.
+
+---
+
 <img src="flappy.gif" alt="game" width="250px">
 
 **[Readme на русском языке](README_RU.md)**  
   
 [Dev blog in Telegram (ENG/RU)](https://t.me/boevdev)
 
-# Flappy Bird, only C, without Java/Kotlin, weight APK (armeabi-v7a + arm64-v8a) < 100 kilobytes
+# Flappy Bird in C (No Java/Kotlin) - APK Size < 100 KB
 
-## History:  
-  
-It all started in 2021. Then I came across the [rawdrawandroid](https://github.com/cnlohr/rawdrawandroid) repository. 
-There was a motivation to make some kind of game with the lowest possible APK weight, but at the same time, so that the game would be simple and understandable.  
-At that moment, the idea came up to make a clone of the long-forgotten Flappy Bird game. Which has already been ported to many programming languages.  
-Then, later in 2021, I found another interesting repository [Raylib](https://github.com/raysan5/raylib).  
-But, the first attempt to make this game was in C++, using [ImGui](https://github.com/ocornut/imgui/), because I already knew him.  
-And so, all the difficulties were presented in Android Native Activity and building a clean APK from apktool without Android Studio.  
-The first attempt failed.  
-Firstly, the weight of the APK was about 1 Megabyte.  
-Secondly, there could be crashes of the game.  
-Thirdly, there was only a library for armeabi-v7a inside the APK, and since 2022 Google's rules require the presence of arm64-v8a libraries.  
-Fourthly, the structure of the project and its organization were terrible, it created a mess in the eyes and made it difficult to navigate the project normally.  
-In general, I tried something, it didn't work out, the thought was stored in my head throughout this time, but no more attempts were made.  
+## History
 
-## Motivation:  
-  
-Around September 14, 2024, in the Raylib discord channel, I saw a guy make a Flappy Bird in C#.  
-Then it became very interesting to me to try a crazy idea, to make this game in C, for Android, with an APK weighing less than 100 Kilobytes.
-The idea seemed crazy, as well as unsuccessful.  
-Just imagine, today, when the weight of the APK reaches 500 Megabytes, you only need to keep less than 100 Kilobytes.
-What are these frames for? It's a sporting interest, will it work out? It worked! But it wasn't easy at all.
-  
-## Implementation:  
-  
-At first, I put together a solution that compiled Hello World in C, packaged the library into an APK, everything was signed and sent to my device via USB.  
-As soon as everything was ready, I went on to explore the resources of the game. The sounds were in ogg format at first, I compressed them, but there were some problems, I don't remember this moment anymore.  
-Then the sounds still became mp3 format, compressed at 16 (kilobytes per second) each, thereby reducing the weight as much as possible, and the sound quality remained tolerable.  
-The first difficulty arose if I had previously used [BASS](https://www.un4seen.com/) to play the sound, and it's heavy for my purpose, I had to study OpenSLES, which reads MP3 format without problems.  
-Further, png images remain from the resources. There is no other way to use the format. Then it was necessary to find something easier than [stb_image](https://github.com/nothings/stb ).  
-So I came across [upng](https://github.com/elanthis/upng), which completely solved the issue of decoding png files for their further rendering.
+The journey began in 2021 when I discovered the [rawdrawandroid](https://github.com/cnlohr/rawdrawandroid) repository. My goal was to create a simple game with the smallest possible APK size. This led me to the idea of cloning the iconic Flappy Bird game, which has been ported to various programming languages over the years.
 
-In general, everything is simpler than it seems.  
-OpenGL ES 2 + shaders for rendering, OpenSLES for sounds, upng for decoding png format and of course Android Native Activity.  
-  
-## Build:  
-- Download [Visual Studio 2022](https://visualstudio.microsoft.com/)
-- - Open Visual Studio Installer
-- - Click "Edit"
-- - Check the following items: Development of classic applications in C++, Development of mobile applications in C++
-- Download Android Studio (we need apktool, sdk, ndk from it)
-- - Install NDK 25.2.9519653 (you can use the version above)
-- In the project, the setting is made for "Debug ARM", but make changes to build.bat (look at the paths)
-- Compile via CTRL + B
-  
-## Copyright: 
-I do not claim copyright. The right to this game and resources belongs to **DotGEARS**.
+Later that year, I found the [Raylib](https://github.com/raysan5/raylib) library, but my initial attempts were in C++ using [ImGui](https://github.com/ocornut/imgui/). I faced several challenges, particularly with Android Native Activity and building a clean APK without Android Studio. My first attempt resulted in a 1 MB APK with potential crashes, lacking support for arm64-v8a, and a messy project structure.
 
-## Inspiration:
+Though the idea lingered in my mind, I did not revisit it until September 2024, when I saw a C# version of Flappy Bird in the Raylib Discord channel. This sparked my interest to create a C version for Android, aiming for an APK size under 100 KB—a daunting yet exciting challenge in an era of 500 MB APKs.
+
+## Implementation
+
+Initially, I created a basic solution that compiled a Hello World program in C and packaged it into an APK. From there, I explored game resources. 
+
+- **Audio**: Sounds were first in OGG format, but I converted them to MP3 (16 kbps) to minimize size while retaining acceptable quality. I switched from using [BASS](https://www.un4seen.com/) to OpenSLES for audio playback, as it better suited my needs.
+- **Images**: For image resources, I sought a simpler alternative to [stb_image](https://github.com/nothings/stb). I discovered [upng](https://github.com/elanthis/upng), which efficiently handles PNG decoding.
+
+The technical stack includes OpenGL ES 2 for rendering, OpenSLES for audio, and Android Native Activity for the core functionality.
+
+## Build Instructions
+
+1. Download [Visual Studio 2022](https://visualstudio.microsoft.com/).
+   - Open the Visual Studio Installer.
+   - Click "Edit."
+   - Check the following options: Development of classic applications in C++, Development of mobile applications in C++.
+   
+2. Download Android Studio (needed for apktool, SDK, and NDK).
+   - Install NDK 25.2.9519653 (or a later version).
+
+3. In the project, set the configuration to "Debug ARM," but update `build.bat` with the correct paths.
+
+4. Compile using `CTRL + B`.
+
+## Copyright
+
+I do not claim copyright. The rights to this game and its resources belong to **DotGEARS**.
+
+## Inspiration
+
 - [rawdrawandroid](https://github.com/cnlohr/rawdrawandroid)
 - [Flapper](https://github.com/its-Lyn/Flapper)
 - [Raylib](https://github.com/raysan5/raylib)
@@ -62,3 +54,7 @@ I do not claim copyright. The right to this game and resources belongs to **DotG
 
 ## Star History
 [![Star History Chart](https://api.star-history.com/svg?repos=VadimBoev/FlappyBird&type=Timeline)](https://star-history.com/#VadimBoev/FlappyBird&Timeline)
+
+---
+
+Feel free to adjust any sections further or add specific features you want to highlight!
