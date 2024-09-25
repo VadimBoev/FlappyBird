@@ -1,6 +1,7 @@
 #include "utils.h"
 #include <android/log.h>
 #include <sys/time.h>
+#include <time.h>
 
 void Log(const char* fmt, ...)
 {

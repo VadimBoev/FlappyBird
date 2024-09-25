@@ -131,6 +131,10 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <NMakeBuildCommandLine>"$(MSBuildProjectDirectory)\build.bat"</NMakeBuildCommandLine>
     <NMakeReBuildCommandLine>"$(MSBuildProjectDirectory)\build.bat"</NMakeReBuildCommandLine>
+    <NMakeIncludeSearchPath>$(VS_NdkRoot)\toolchains\llvm\prebuilt\windows-x86_64\lib\clang\18\include;$(StlIncludeDirectories);$(Sysroot)\usr\include;$(VS_NdkRoot)\sources\android\ndk_helper;$(VS_NdkRoot)\toolchains\llvm\prebuilt\windows-x86_64\sysroot\usr\include;$(VS_NdkRoot)\sources\android\cpufeatures;$(VS_NdkRoot)\sources\android\native_app_glue</NMakeIncludeSearchPath>
+    <AdditionalOptions>
+    </AdditionalOptions>
+    <NMakePreprocessorDefinitions>__ANDROID_API__=30</NMakePreprocessorDefinitions>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
   </PropertyGroup>

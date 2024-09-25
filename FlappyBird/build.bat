@@ -2,7 +2,7 @@
 setlocal
 
 set ANDROID_SDK_ROOT=C:\Users\VadimPC\AppData\Local\Android\Sdk
-set ANDROID_NDK_ROOT=C:\Users\VadimPC\AppData\Local\Android\Sdk\ndk\25.2.9519653
+set ANDROID_NDK_ROOT=C:\Users\VadimPC\AppData\Local\Android\Sdk\ndk\27.1.12297006
 set PATH=%ANDROID_SDK_ROOT%\tools;%ANDROID_SDK_ROOT%\platform-tools;%PATH%
 
 set ADB=C:\Users\VadimPC\AppData\Local\Android\Sdk\platform-tools\adb.exe

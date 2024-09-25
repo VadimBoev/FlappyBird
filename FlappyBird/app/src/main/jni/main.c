@@ -96,7 +96,8 @@ void android_main(struct android_app* state)
         int events;
         struct android_poll_source* source;
 
-        while ((ident = ALooper_pollAll(0, NULL, &events, (void**)&source)) >= 0)
+        // Poll all events until we reach return value TIMEOUT, meaning no events left to process
+        while ((ident = ALooper_pollOnce(0, NULL, &events, (void**)&source)) > ALOOPER_POLL_TIMEOUT)
         {
             if (source != NULL) {
                 source->process(state, source);
@@ -115,7 +116,7 @@ void android_main(struct android_app* state)
             double current_time = (double)(current_timespec.tv_sec) + (current_timespec.tv_nsec / 1000000000.0);
 
             // calc delta time
-            DeltaTime = g_Time > 0.0 ? (float)(current_time - g_Time) : (float)(1.0f / 60.0f);
+            DeltaTime = g_Time > 0.0 ? (float)(current_time - g_Time) : (float)TARGET_FRAME_TIME;
 
             // checking if enough time has passed for a new frame
             if (current_time - g_LastFrameTime >= TARGET_FRAME_TIME)

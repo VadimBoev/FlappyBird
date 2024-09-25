@@ -5,6 +5,7 @@
 #include "texture.h"
 #include "utils.h"
 #include "init.h"
+#include <math.h>
 
 GLuint LoadTexture(const char* assetPath)
 {
