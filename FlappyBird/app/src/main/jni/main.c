@@ -45,34 +45,39 @@ int32_t handle_input(struct android_app* app, AInputEvent* event)
         bool isReleased = false;
         bool isMoved = false;
         int index;
-
+    
         for (size_t i = 0; i < pointerCount; ++i)
         {
             x = AMotionEvent_getX(event, i);
             y = AMotionEvent_getY(event, i);
             index = AMotionEvent_getPointerId(event, i);
-
+    
             if (action == AMOTION_EVENT_ACTION_POINTER_DOWN || action == AMOTION_EVENT_ACTION_DOWN)
             {
                 int id = index;
                 if (action == AMOTION_EVENT_ACTION_POINTER_DOWN && id != whichsource) continue;
 
-                isDown = true;
+                mouse.x = x;
+                mouse.y = y;
+                mouse.isDown = true;
             }
             else if (action == AMOTION_EVENT_ACTION_POINTER_UP || action == AMOTION_EVENT_ACTION_UP || action == AMOTION_EVENT_ACTION_CANCEL)
             {
                 int id = index;
                 if (action == AMOTION_EVENT_ACTION_POINTER_UP && id != whichsource) continue;
-
-                isReleased = true;
+    
+                mouse.x = x;
+                mouse.y = y;
+                mouse.isReleased = true;
             }
             else if (action == AMOTION_EVENT_ACTION_MOVE)
             {
-                isMoved = true;
+                mouse.isMoved = true;
+
+                mouse.x = x;
+                mouse.y = y;
             }
         }
-
-        MouseUpdate(&mouse, x, y, isDown, isReleased, isMoved);
 
         return 1;
     }

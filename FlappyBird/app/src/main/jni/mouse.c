@@ -10,17 +10,10 @@ void MouseInit(MouseState* mouse)
     mouse->isMoved = false;
 }
 
-void MouseUpdate(MouseState* mouse, float x, float y, bool down, bool released, bool moved) 
-{
-    mouse->x = x;
-    mouse->y = y;
-    mouse->isDown = down;
-    mouse->isReleased = released;
-    mouse->isMoved = moved;
-}
-
 void MouseReset(MouseState* mouse) 
 {
+    mouse->x = -1.0f;
+    mouse->y = -1.0f;
     mouse->isDown = false;
     mouse->isReleased = false;
     mouse->isMoved = false;
