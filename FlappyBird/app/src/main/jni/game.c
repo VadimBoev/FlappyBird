@@ -584,7 +584,7 @@ void Render()
         RenderPipes();
         RenderBird();
 
-        if (bird.y + bird.height >= ScaleY(75))
+        if (bird.y + bird.height >= ScaleY(75) - bird.height)
         {
             bird.y = ScaleY(75) - bird.height;
             currentState = FADE_IN_PANEL;
