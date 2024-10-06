@@ -411,7 +411,7 @@ void RenderScore(int score, float x, float y, float digitWidth, float digitHeigh
     }
 }
 
-void RenderSmallScore(int score, float x, float y, float digitWidth, float digitHeight)
+void RenderSmallScoreLeft(int score, float x, float y, float digitWidth, float digitHeight)
 {
     char scoreStr[10];
     sprintf(scoreStr, "%d", score);
@@ -438,6 +438,14 @@ void RenderSmallScore(int score, float x, float y, float digitWidth, float digit
 
         RenderTexture(texture, x + i * digitWidth, y, digitWidth, digitHeight);
     }
+}
+
+void RenderSmallScoreRight(int score, float x, float y, float digitWidth, float digitHeight)
+{
+    char scoreStr[10];
+    sprintf(scoreStr, "%d", score);
+    int len = strlen(scoreStr);
+    RenderSmallScoreLeft(score, x - len * digitWidth, y, digitWidth, digitHeight);
 }
 
 void Render()
@@ -602,10 +610,10 @@ void Render()
         RenderTexture(t_panel, ScaleX(15.f), panelY, ScaleX(70.f), ScaleY(17.5f));
 
         // Render default score
-        RenderSmallScore(score, ScaleX(70.f), panelY + ScaleY(5.f), ScaleX(4.f), ScaleY(3.f));
+        RenderSmallScoreRight(score, ScaleX(78), panelY + ScaleY(5), ScaleX(4), ScaleY(3));
 
         // Render best score
-        RenderSmallScore(bestScore, ScaleX(70.f), panelY + ScaleY(11.5f), ScaleX(4.f), ScaleY(3.f));
+        RenderSmallScoreRight(bestScore, ScaleX(78), panelY + ScaleY(11.5f), ScaleX(4), ScaleY(3));
 
         if (newBestScore)
         {
