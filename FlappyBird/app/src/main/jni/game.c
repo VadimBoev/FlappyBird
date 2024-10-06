@@ -188,32 +188,32 @@ bool InitGame()
     t_yellowbird_midflap = LoadTexture("sprites/yellowbird-midflap.png");
     t_yellowbird_upflap = LoadTexture("sprites/yellowbird-upflap.png");
 
-    bird.x = ScaleX(18.52);
+    bird.x = ScaleX(18.52f);
     bird.y = ScaleY(20);
     bird.velocity = 0.0f;
     bird.angle = 0.0f;
-    bird.width = ScaleX(11.11);
-    bird.height = ScaleY(4.17);
+    bird.width = ScaleX(11.11f);
+    bird.height = ScaleY(4.17f);
     bird.currentTexture = t_yellowbird_midflap;
     bird.frame = 0;
     bird.lastFrameTime = 0;
 
 
     pipes[0].x = ScaleX(100);
-    pipes[0].y = ScaleY(37.5);
+    pipes[0].y = ScaleY(37.5f);
     pipes[0].w = ScaleX(15);
-    pipes[0].h = ScaleY(37.5);
+    pipes[0].h = ScaleY(37.5f);
     pipes[0].offset = Random(ScaleY(-SPACE_BETWEEN_PIPES), ScaleY(SPACE_BETWEEN_PIPES));
 
     pipes[1].x = ScaleX(100) + ScaleX(60);
-    pipes[1].y = ScaleY(37.5);
+    pipes[1].y = ScaleY(37.5f);
     pipes[1].w = ScaleX(15);
-    pipes[1].h = ScaleY(37.5);
+    pipes[1].h = ScaleY(37.5f);
     pipes[1].offset = Random(ScaleY(-SPACE_BETWEEN_PIPES), ScaleY(SPACE_BETWEEN_PIPES));
 
 
-    logoY = ScaleY(20.83);
-    birdY = ScaleY(20.83);
+    logoY = ScaleY(20.83f);
+    birdY = ScaleY(20.83f);
     logoVelocity = 1.1f;
     birdVelocity = 1.1f;
 
@@ -466,11 +466,11 @@ void Render()
     logoY += logoVelocity;
     birdY += birdVelocity;
 
-    if (logoY > ScaleY(20.83) + 25 || logoY < ScaleY(20.83) - 25) {
+    if (logoY > ScaleY(20.83f) + 25 || logoY < ScaleY(20.83f) - 25) {
         logoVelocity = -logoVelocity;
     }
 
-    if (birdY > ScaleY(20.83) + 25 || birdY < ScaleY(20.83) - 25) {
+    if (birdY > ScaleY(20.83f) + 25 || birdY < ScaleY(20.83f) - 25) {
         birdVelocity = -birdVelocity;
     }
 
@@ -484,13 +484,14 @@ void Render()
 
         if (ButtonBump(t_start, ScaleX(10), ScaleY(65), ScaleX(35), ScaleY(6)))
         {
+            PlayAudio("audio/click_sound.ogg");
             currentState = FADE_IN;
         }
         
         // button SCORE
         if (ButtonBump(t_score, ScaleX(55), ScaleY(65), ScaleX(35), ScaleY(6)))
         {
-        
+            PlayAudio("audio/click_sound.ogg");
         }
     }
     else if (currentState == FADE_OUT || currentState == READY_GAME) //Ready?
@@ -627,6 +628,7 @@ void Render()
         // button OK
         if (ButtonBump(t_ok, ScaleX(10), ScaleY(65), ScaleX(35), ScaleY(6)))
         {
+            PlayAudio("audio/click_sound.ogg");
             //Reset
             currentState = IDLE;
             score = 0;
@@ -664,7 +666,7 @@ void Render()
         // button SHARE
         if (ButtonBump(t_share, ScaleX(55), ScaleY(65), ScaleX(35), ScaleY(6)))
         {
-
+            PlayAudio("audio/click_sound.ogg");
         }
     }
 
