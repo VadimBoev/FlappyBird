@@ -382,7 +382,7 @@ void UpdateBirdTextureForLogo()
     }
 }
 
-void RenderScore(int score, float x, float y, float digitWidth, float digitHeight)
+void RenderScoreLeft(int score, float x, float y, float digitWidth, float digitHeight)
 {
     char scoreStr[10];
     sprintf(scoreStr, "%d", score);
@@ -409,6 +409,14 @@ void RenderScore(int score, float x, float y, float digitWidth, float digitHeigh
 
         RenderTexture(texture, x + i * digitWidth, y, digitWidth, digitHeight);
     }
+}
+
+void RenderScoreCenter(int score, float x, float y, float digitWidth, float digitHeight)
+{
+    char scoreStr[10];
+    sprintf(scoreStr, "%d", score);
+    int len = strlen(scoreStr);
+    RenderScoreLeft(score, x - (len - 1) / 2.f * digitWidth, y, digitWidth, digitHeight);
 }
 
 void RenderSmallScoreLeft(int score, float x, float y, float digitWidth, float digitHeight)
