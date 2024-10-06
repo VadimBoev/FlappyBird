@@ -2,6 +2,7 @@
 #include "init.h"
 #include "utils.h"
 #include "mouse.h"
+#include <unistd.h>
 
 
 #define TARGET_FPS 60
@@ -134,6 +135,10 @@ void android_main(struct android_app* state)
             }
 
             g_Time = current_time;
+
+            // it has not been tested and remains questionable
+            // timeout for thread to fix excessive CPU consumption
+            //usleep(1000);
         }
     }
 }
