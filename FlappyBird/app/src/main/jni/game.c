@@ -560,7 +560,7 @@ void Render()
         RenderBird();
 
         if (score > 0)
-            RenderScore(score, ScaleX(45.f), ScaleY(7.f), ScaleX(8.f), ScaleY(5.f));
+            RenderScoreCenter(score, ScaleX(45.f), ScaleY(7.f), ScaleX(8.f), ScaleY(5.f));
     }
     else if (currentState == STOP_GAME)
     {
