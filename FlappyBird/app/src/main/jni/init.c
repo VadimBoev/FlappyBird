@@ -27,39 +27,44 @@ GLuint gColorHandle;
 
 //fix by Tempa
 const char* vertexShaderTexture =
-    "attribute vec4 aPosition;\n"
-    "attribute vec2 aTexCoord;\n"
-    "varying vec2 vTexCoord;\n"
-    "void main() {\n"
-    "    gl_Position = aPosition;\n"
-    "    vTexCoord = aTexCoord;\n"
-    "}\n";
+    "attribute vec4 aPosition;"
+    "attribute vec2 aTexCoord;"
+    "varying vec2 vTexCoord;"
+    "void main()"
+    "{"
+        "gl_Position = aPosition;"
+        "vTexCoord = aTexCoord;"
+    "}";
 
 const char* fragmentShaderTexture =
-    "precision mediump float;\n"
-    "varying vec2 vTexCoord;\n"
-    "uniform sampler2D uTexture;\n"
-    "void main() {\n"
-    "    vec4 texColor = texture2D(uTexture, vTexCoord);\n"
-    "    if (texColor.rgb == vec3(0.0)) {\n"
-    "        texColor.a = 0.0;\n"
-    "    }\n"
-    "    gl_FragColor = texColor;\n"
-    "}\n";
+    "precision mediump float;"
+    "varying vec2 vTexCoord;"
+    "uniform sampler2D uTexture;"
+    "void main()"
+    "{"
+        "vec4 texColor = texture2D(uTexture, vTexCoord);"
+        "if (texColor.rgb == vec3(0.0))"
+        "{"
+            "texColor.a = 0.0;"
+        "}"
+        "gl_FragColor = texColor;"
+    "}";
 
 //by vadim
 const char* vertexShaderColor =
-    "attribute vec4 a_Position;\n"
-    "void main() {\n"
-    "    gl_Position = a_Position;\n"
-    "}\n";
+    "attribute vec4 a_Position;"
+    "void main()"
+    "{"
+        "gl_Position = a_Position;"
+    "}";
 
 const char* fragmentShaderColor =
-    "precision mediump float;\n"
-    "uniform vec4 u_Color;\n"
-    "void main() {\n"
-    "    gl_FragColor = u_Color;\n"
-    "}\n";
+    "precision mediump float;"
+    "uniform vec4 u_Color;"
+    "void main()"
+    "{"
+        "gl_FragColor = u_Color;"
+    "}";
 
 
 void Init(struct android_app* app)
