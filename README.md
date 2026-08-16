@@ -69,7 +69,7 @@ I do not claim any copyright. The rights to the game and resources belong to **D
 
 ## 🌠 Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=VadimBoev/FlappyBird&type=Timeline)](https://star-history.com/#VadimBoev/FlappyBird&Timeline)
+[![Star History Chart](https://star-history.dera.page/svg?repos=VadimBoev/FlappyBird&type=Timeline)](https://star-history.dera.page/#VadimBoev/FlappyBird&Timeline)
 
 ---
 
